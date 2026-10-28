@@ -1,0 +1,4445 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Hùng Lê — Thực đơn & Theo dõi (Compact)</title>
+
+  <!-- Libs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#f5f7fa; --card:#fff; --ink:#1f2937; --muted:#6b7280;
+      --pri:#10b981; --pri-700:#059669; --sec:#3b82f6; --warn:#f59e0b; --danger:#ef4444; --border:#e5e7eb;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--ink); padding:16px; max-width:1200px; margin:0 auto; line-height:1.55}
+    h1{font-size:22px;text-align:center;margin-bottom:14px}
+    h3{margin:8px 0 10px}
+    .tabs{display:flex; gap:6px; border-bottom:1px solid var(--border); flex-wrap:wrap; margin:10px auto 0; max-width:900px}
+    .tab-btn{appearance:none;border:none;background:none;padding:10px 14px;border-radius:10px 10px 0 0;cursor:pointer;color:var(--muted);font-weight:600}
+    .tab-btn[aria-selected="true"]{color:var(--pri);border-bottom:3px solid var(--pri)}
+    .content{max-width:900px;margin:12px auto}
+    .card{background:#fff; border:1px solid var(--border); border-radius:12px; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,.05); margin-bottom:10px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .col{flex:1 1 220px}
+    label{font-size:12px; color:#374151; font-weight:600; margin-bottom:6px; display:block}
+    input, select, textarea{width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:10px; font-size:14px; background:#fff}
+    textarea{min-height:80px; resize:vertical}
+    .btn{width:auto; padding:10px 14px; border:none; border-radius:10px; color:#fff; cursor:pointer; font-weight:700; font-size:14px}
+    .btn+.btn{margin-left:6px}
+    .btn-pri{background:var(--pri)} .btn-pri:hover{background:var(--pri-700)}
+    .btn-sec{background:var(--sec)} .btn-warn{background:var(--warn); color:#1f2937} .btn-danger{background:var(--danger)} .btn-ghost{background:#1118270d; color:#111827}
+    .stack{display:flex; flex-direction:column; gap:8px}
+    .hidden{display:none !important}
+    .help{color:var(--muted); font-size:12px}
+    .kpi{display:flex; gap:10px; flex-wrap:wrap}
+    .kpi .pill{flex:1 1 150px; background:#f0fdf4; border:1px solid #dcfce7; padding:10px; border-radius:10px; font-size:13px}
+
+    table{width:100%; border-collapse:collapse}
+    th,td{border:1px solid var(--border); padding:8px; text-align:center; font-size:13px}
+    th{background:#f8fafc; font-weight:700}
+    .table-actions{display:flex; gap:6px; justify-content:center; flex-wrap:wrap}
+    .tag{display:inline-block; padding:3px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#374151}
+
+    .split-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start}
+    .col.delete{flex:0 0 auto; margin-left:auto; display:flex; align-items:center}
+
+    /* Saved plans */
+    details>summary{cursor:pointer; padding:6px 10px; background:#f9fafb; border:1px solid var(--border); border-radius:8px; font-weight:700}
+    details[open]>summary{background:#eef2ff}
+    .saved-mobile-macro{display:none}
+    .saved-macro-donut-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+    .saved-macro-donut{
+      width:110px;
+      height:110px;
+      border-radius:50%;
+      background:
+        conic-gradient(
+          #2563eb 0 calc(var(--p)*1%),
+          #f59e0b calc(var(--p)*1%) calc((var(--p) + var(--c))*1%),
+          #ef4444 calc((var(--p) + var(--c))*1%) 100%
+        );
+      position:relative;
+      box-shadow:0 6px 18px rgba(15,23,42,.14);
+    }
+    .saved-donut-label{
+      position:absolute;
+      transform:translate(-50%,-50%);
+      font-size:11px;
+      font-weight:800;
+      color:#fff;
+      background:rgba(15,23,42,.42);
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:999px;
+      padding:1px 5px;
+      line-height:1.2;
+      z-index:2;
+      white-space:nowrap;
+      pointer-events:none;
+      text-shadow:0 1px 1px rgba(0,0,0,.25);
+    }
+    .saved-macro-donut::after{
+      content:"";
+      position:absolute;
+      inset:18px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:inset 0 0 0 1px #e2e8f0;
+      z-index:1;
+    }
+    .saved-macro-title{font-size:12px;font-weight:800;color:#334155}
+    .saved-macro-legend{font-size:11px;color:#64748b;text-align:center}
+    .saved-actual-box{
+      border:1px solid #d7e6ff;
+      background:linear-gradient(180deg,#f8fbff 0%,#f1f6ff 100%);
+      border-radius:12px;
+      padding:10px;
+      font-size:13px;
+      line-height:1.45;
+    }
+    .export-wrap{background:#fff; border:3px solid #374151; border-radius:12px; padding:14px; width:800px; color:#111827}
+    .export-wrap .meal{border:2px solid #e5e7eb; border-radius:10px; padding:8px; margin:10px 0}
+    .export-wrap .meta{font-size:13px}
+    .export-wrap table{display:table !important;width:100% !important;table-layout:fixed;white-space:normal !important}
+
+    .mode{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .seg{display:inline-flex; gap:2px; background:#eef2ff; border:1px solid var(--border); padding:2px; border-radius:999px}
+    .seg button{appearance:none;background:transparent;border:none;padding:6px 10px;border-radius:999px;font-weight:700;cursor:pointer;color:#374151}
+    .seg button[aria-pressed="true"]{background:var(--pri); color:#fff}
+
+    /* --- Dense UI additions --- */
+    .meal-compact .row{display:grid;grid-template-columns:1.3fr 1fr auto;gap:8px;align-items:center}
+    .input-group{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .input-group input{border:0;border-right:1px solid var(--border);border-radius:0;padding:9px 10px}
+    .input-group select{border:0;border-radius:0;padding:9px 10px}
+    .btn-xxs{padding:5px 10px;border-radius:10px;font-weight:700;line-height:1}
+    .meal-compact .card> .row:first-child{gap:8px}
+    .meal-compact .help{font-size:12px}
+    .meal-compact .table-actions .btn{padding:8px 10px}
+    .meal-compact table th, .meal-compact table td{font-size:12px;padding:6px}
+
+    /* Emphasis for meal header */
+    .meal-head{background:#ecfeff;border:1px solid #bae6fd;border-radius:12px;padding:10px;display:grid;grid-template-columns:1.2fr .8fr auto;gap:10px;align-items:end}
+    .meal-head input{font-size:18px;font-weight:700;border:2px solid #93c5fd;background:#fff;border-radius:12px;padding:10px}
+    .meal-head label{font-size:12px;color:#0f172a;font-weight:800}
+    .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .actions-inline{display:inline-flex;gap:6px;align-items:flex-end}
+    .btn-icon{padding:8px 10px;border-radius:10px;font-weight:700}
+    .btn-dim{background:#f3f4f6;color:#111827}
+    .btn-dim:hover{background:#e5e7eb}
+
+    .export-mode{padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px}
+
+    /* Supplements compact styling */
+    .supp-compact .row{display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:8px;align-items:center}
+    .supp-compact .input-group{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .supp-compact .input-group input{border:0;border-right:1px solid var(--border);border-radius:0;padding:9px 10px}
+    .supp-compact .input-group select{border:0;border-radius:0;padding:9px 10px}
+    .supp-compact .btn-xxs{padding:8px 10px;border-radius:10px;font-weight:700}
+
+    /* Step 2 compact strip */
+    .strip-grid{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) minmax(180px,1fr) auto;gap:10px;align-items:end}
+    .strip-grid .mode{margin:0}
+    @media (max-width: 900px){ .strip-grid{grid-template-columns:1fr} }
+
+    /* Step 1 compact one-line grid */
+    .step1-grid{display:grid;grid-template-columns:1.2fr .8fr .6fr .8fr .8fr .6fr;gap:8px;align-items:end}
+    .step1-grid input, .step1-grid select{padding:8px 10px;font-size:13px;height:36px}
+    .step1-grid label{margin-bottom:4px}
+    @media (max-width: 980px){ .step1-grid{grid-template-columns:1fr 1fr 1fr} }
+
+    .input-seg{display:flex;align-items:center;gap:8px}
+    .input-seg .seg{margin:0; position:relative; z-index:1}
+    .input-seg .seg button{min-width:40px; position:relative; z-index:2; pointer-events:auto}
+    #calorie-adjust{position:relative; z-index:0}
+
+    /* ensure layout room for buttons */
+    .input-seg #calorie-adjust{flex:0 0 120px}
+  
+.calorie-head{display:flex;align-items:center;gap:6px;justify-content:flex-start}
+#calorie-adjust-label{white-space:nowrap;margin-right:8px}
+#calorie-pcts-head{margin-left:0}
+#calorie-pcts-head button{padding:4px 8px;font-size:12px;min-width:32px}
+
+.meal-title-row{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+
+    .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:50;}
+    .modal-box{background:#fff;border-radius:16px;max-width:520px;width:100%;padding:18px;border:1px solid var(--border);box-shadow:0 10px 40px rgba(15,23,42,.35);}
+
+    /* View mode switcher */
+    .view-mode-wrap{max-width:900px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+    #view-mode-seg button{min-width:72px}
+
+    /* Force mobile mode */
+    body.view-mobile{padding:10px;max-width:100%}
+    body.view-mobile .tabs,
+    body.view-mobile .content{max-width:100%}
+    body.view-mobile .card{padding:10px;border-radius:10px}
+    body.view-mobile .tab-btn{padding:8px 10px;font-size:13px}
+    body.view-mobile .step1-grid{grid-template-columns:1fr 1fr}
+    body.view-mobile .strip-grid{grid-template-columns:1fr}
+    body.view-mobile .meal-head{grid-template-columns:1fr}
+    body.view-mobile .meal-compact .row{grid-template-columns:1fr}
+    body.view-mobile .supp-compact .row{grid-template-columns:1fr}
+    body.view-mobile .kpi .pill{flex:1 1 100%}
+    body.view-mobile .saved-kpi-desktop{display:none}
+    body.view-mobile .saved-mobile-macro{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    body.view-mobile .split-actions .btn{flex:1 1 calc(50% - 4px)}
+    body.view-mobile table{display:block;max-width:100%;overflow-x:auto;white-space:nowrap}
+    body.view-mobile th, body.view-mobile td{font-size:12px;padding:6px}
+    body.view-mobile input, body.view-mobile select, body.view-mobile textarea{font-size:16px}
+    body.view-mobile .export-wrap:not(.export-fixed){width:100%;max-width:100%}
+    body.view-mobile .modal-box{max-width:96vw;padding:14px}
+
+    /* Force desktop mode */
+    body.view-pc .step1-grid{grid-template-columns:1.2fr .8fr .6fr .8fr .8fr .6fr}
+    body.view-pc .strip-grid{grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) minmax(180px,1fr) auto}
+    body.view-pc .meal-head{grid-template-columns:1.2fr .8fr auto}
+    body.view-pc .meal-compact .row{grid-template-columns:1.3fr 1fr auto}
+    body.view-pc .supp-compact .row{grid-template-columns:1.3fr 1fr 1fr auto}
+    body.view-pc table{display:table;white-space:normal}
+
+    /* --- Modern Clean Pro theme override --- */
+    :root{
+      --bg:#eef3f9;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --pri:#2563eb;
+      --pri-700:#1d4ed8;
+      --sec:#0ea5e9;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --border:#dbe4ef;
+      --ring:rgba(37,99,235,.18);
+      --shadow-sm:0 4px 14px rgba(15,23,42,.06);
+      --shadow-md:0 12px 28px rgba(15,23,42,.09);
+    }
+    body{
+      background:
+        radial-gradient(1000px 500px at 5% -20%, rgba(37,99,235,.10), transparent 60%),
+        radial-gradient(900px 500px at 100% -20%, rgba(14,165,233,.11), transparent 65%),
+        var(--bg);
+      color:var(--ink);
+      padding:20px 14px 28px;
+    }
+    h1{
+      font-size:clamp(22px,2.4vw,30px);
+      letter-spacing:.2px;
+      margin-bottom:10px;
+      color:#0b1220;
+    }
+    .view-mode-wrap{
+      margin:0 auto 12px;
+      background:rgba(255,255,255,.7);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:8px 10px;
+      box-shadow:var(--shadow-sm);
+      backdrop-filter: blur(6px);
+    }
+    .tabs{
+      position:sticky;
+      top:8px;
+      z-index:20;
+      background:rgba(255,255,255,.88);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:6px;
+      box-shadow:var(--shadow-sm);
+      backdrop-filter: blur(8px);
+    }
+    .tab-btn{
+      border-radius:10px;
+      padding:9px 12px;
+      transition:all .18s ease;
+      border:1px solid transparent;
+    }
+    .tab-btn:hover{
+      color:#0f172a;
+      background:#f8fbff;
+      border-color:#e4edf7;
+    }
+    .tab-btn[aria-selected="true"]{
+      color:#0f172a;
+      border:1px solid #bfdbfe;
+      background:linear-gradient(180deg,#eff6ff 0%,#dbeafe 100%);
+      border-bottom:1px solid #bfdbfe;
+    }
+    .content{margin-top:14px}
+    .card{
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:var(--shadow-sm);
+      padding:14px;
+      transition:box-shadow .2s ease, border-color .2s ease, transform .2s ease;
+    }
+    .card:hover{
+      border-color:#c8d7ea;
+      box-shadow:var(--shadow-md);
+      transform:translateY(-1px);
+    }
+    h3{
+      color:#0b1220;
+      margin:4px 0 12px;
+      font-size:clamp(15px,1.8vw,18px);
+    }
+    label{
+      color:#334155;
+      font-weight:700;
+      font-size:12px;
+      letter-spacing:.2px;
+    }
+    input, select, textarea{
+      border:1px solid #cfdbe8;
+      background:#fff;
+      color:#0f172a;
+      border-radius:12px;
+      min-height:40px;
+      transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    input:hover, select:hover, textarea:hover{border-color:#b8cbe0}
+    input:focus, select:focus, textarea:focus{
+      outline:none;
+      border-color:#60a5fa;
+      box-shadow:0 0 0 4px var(--ring);
+      background:#fff;
+    }
+    .btn{
+      min-height:40px;
+      border-radius:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      transition:transform .14s ease, filter .14s ease, box-shadow .14s ease;
+      box-shadow:0 4px 10px rgba(15,23,42,.10);
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.02)}
+    .btn:active{transform:translateY(0)}
+    .btn-pri{background:linear-gradient(180deg,#3b82f6 0%,#2563eb 100%)}
+    .btn-pri:hover{background:linear-gradient(180deg,#3b82f6 0%,#1d4ed8 100%)}
+    .btn-sec{background:linear-gradient(180deg,#0ea5e9 0%,#0284c7 100%)}
+    .btn-warn{background:linear-gradient(180deg,#fbbf24 0%,#f59e0b 100%);color:#1f2937}
+    .btn-danger{background:linear-gradient(180deg,#f87171 0%,#ef4444 100%)}
+    .btn-ghost{
+      background:#f1f5f9;
+      color:#0f172a;
+      border:1px solid #d7e2ef;
+      box-shadow:none;
+    }
+    .tag{
+      background:#eef2ff;
+      color:#334155;
+      border:1px solid #dbe5ff;
+      font-weight:700;
+      padding:4px 9px;
+    }
+    .kpi .pill{
+      background:linear-gradient(180deg,#f8fbff 0%,#f1f6ff 100%);
+      border:1px solid #d7e6ff;
+      border-radius:12px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    .mode .seg{
+      border:1px solid #d7e3f5;
+      background:#f5f8ff;
+      border-radius:999px;
+      padding:3px;
+    }
+    .seg button{
+      border-radius:999px;
+      color:#334155;
+      font-weight:800;
+    }
+    .seg button[aria-pressed="true"]{
+      background:linear-gradient(180deg,#3b82f6 0%,#2563eb 100%);
+      color:#fff;
+      box-shadow:0 3px 8px rgba(37,99,235,.35);
+    }
+    table{
+      border-collapse:separate;
+      border-spacing:0;
+      border-radius:12px;
+      overflow:hidden;
+      border:1px solid #d7e1ec;
+      background:#fff;
+    }
+    th, td{
+      border-color:#e2e8f0;
+      font-size:13px;
+    }
+    th{
+      background:#f8fafc;
+      color:#334155;
+      position:sticky;
+      top:0;
+      z-index:1;
+    }
+    tr:nth-child(even) td{background:#fcfdff}
+    details>summary{
+      border:1px solid #dbe7f5;
+      background:linear-gradient(180deg,#f8fbff 0%,#edf4ff 100%);
+      border-radius:10px;
+      color:#0f172a;
+    }
+    details[open]>summary{background:linear-gradient(180deg,#eff6ff 0%,#e1efff 100%)}
+    .meal-head{
+      background:linear-gradient(180deg,#f0f9ff 0%,#ecfeff 100%);
+      border:1px solid #bae6fd;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+    }
+    .modal-box{
+      border:1px solid #d6e2f2;
+      box-shadow:0 20px 60px rgba(15,23,42,.25);
+      border-radius:18px;
+    }
+
+    /* Mobile-first polish */
+    @media (max-width: 900px){
+      body{padding:12px 10px 18px}
+      .tabs{
+        top:4px;
+        gap:6px;
+        overflow-x:auto;
+        flex-wrap:nowrap;
+        -webkit-overflow-scrolling:touch;
+      }
+      .tab-btn{
+        white-space:nowrap;
+        flex:0 0 auto;
+        padding:8px 10px;
+        font-size:13px;
+      }
+      .content{max-width:100%;margin-top:10px}
+      .card{padding:11px;border-radius:12px}
+      .split-actions .btn{flex:1 1 calc(50% - 4px)}
+      .table-actions .btn{width:100%}
+      table{
+        display:block;
+        width:100%;
+        overflow-x:auto;
+        white-space:nowrap;
+      }
+      .meal-head,
+      .step1-grid,
+      .strip-grid,
+      .meal-compact .row,
+      .supp-compact .row{
+        grid-template-columns:1fr !important;
+      }
+      .kpi .pill{flex:1 1 100%}
+    }
+
+    @media (max-width: 560px){
+      h1{font-size:21px}
+      .split-actions .btn{flex:1 1 100%}
+      #view-mode-seg button{min-width:62px}
+      .btn{min-height:42px}
+      body.view-mobile .saved-mobile-macro{grid-template-columns:1fr}
+    }
+
+    /* Admin add forms compact rows */
+    .admin-form-row-3{
+      display:grid;
+      grid-template-columns:1fr 1fr auto;
+      gap:10px;
+      align-items:end;
+    }
+    .admin-form-row-6{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(110px,1fr));
+      gap:10px;
+      align-items:end;
+    }
+    .admin-form-row-3 .col,
+    .admin-form-row-6 .col{
+      min-width:0;
+      flex:initial;
+    }
+    .admin-form-row-3 .btn,
+    .admin-form-row-6 .btn{
+      white-space:nowrap;
+    }
+    .plan-mode-box{display:flex;flex-direction:column;gap:8px}
+    .plan-mode-box .col{flex:initial}
+    .week-day-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .week-day-wrap .seg{flex-wrap:wrap}
+    #plan-mode-box{margin:0;padding:0}
+    #week-day-wrap.hidden{display:none !important}
+    #manual-container:empty{display:none !important;margin:0 !important;padding:0 !important}
+    @media (max-width: 1200px){
+      .admin-form-row-6{
+        grid-template-columns:repeat(3,minmax(140px,1fr));
+      }
+    }
+    @media (max-width: 760px){
+      .admin-form-row-3{
+        grid-template-columns:1fr;
+      }
+      .admin-form-row-6{
+        grid-template-columns:repeat(2,minmax(120px,1fr));
+      }
+    }
+    @media (max-width: 480px){
+      .admin-form-row-6{
+        grid-template-columns:1fr;
+      }
+    }
+
+    /* Meal builder: compact on mobile for easier scanning */
+    body.view-mobile #step3 .card{padding:9px}
+    body.view-mobile #step3 .stack{gap:6px}
+    body.view-mobile #manual-container .card.meal-compact{padding:9px;border-radius:12px}
+    body.view-mobile #manual-container .meal-head{
+      grid-template-columns:1fr 116px auto !important;
+      gap:7px;
+      padding:8px;
+    }
+    body.view-mobile #manual-container .meal-head input{
+      font-size:15px;
+      padding:8px 10px;
+      min-height:38px;
+    }
+    body.view-mobile #manual-container .meal-title-row{margin-bottom:2px}
+    body.view-mobile #manual-container .meal-title-row label{font-size:11px}
+    body.view-mobile #manual-container .meal-title-row .btn{
+      min-height:28px;
+      padding:4px 8px;
+      font-size:12px;
+    }
+    body.view-mobile #manual-container .meal-compact .mode{
+      display:block;
+      overflow:hidden;
+      width:100%;
+    }
+    body.view-mobile #manual-container .meal-compact .seg{
+      display:flex;
+      width:100%;
+      overflow-x:auto;
+      white-space:nowrap;
+      max-width:100%;
+      gap:4px;
+      padding:2px;
+      -webkit-overflow-scrolling:touch;
+    }
+    body.view-mobile #manual-container .meal-compact .seg::-webkit-scrollbar{
+      height:4px;
+    }
+    body.view-mobile #manual-container .meal-compact .seg button{
+      flex:0 0 auto;
+      padding:5px 8px;
+      font-size:12px;
+    }
+    body.view-mobile #manual-container .meal-compact .row[id^='food-row-']{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 118px auto !important;
+      align-items:center;
+      gap:6px;
+    }
+    body.view-mobile #manual-container .meal-compact .row[id^='food-row-'] label{
+      display:none;
+    }
+    body.view-mobile #manual-container .meal-compact .row[id^='food-row-'] select{
+      min-height:36px;
+      padding:7px 8px;
+      font-size:13px;
+    }
+    body.view-mobile #manual-container .meal-compact .input-group{
+      border-radius:10px;
+    }
+    body.view-mobile #manual-container .meal-compact .input-group input,
+    body.view-mobile #manual-container .meal-compact .input-group select{
+      min-height:36px;
+      padding:7px 8px;
+      font-size:13px;
+    }
+    body.view-mobile #manual-container .meal-compact .actions-inline .btn{
+      min-height:36px;
+      padding:7px 9px;
+      font-size:12px;
+      box-shadow:none;
+    }
+    body.view-mobile #step3 .split-actions .btn{
+      flex:0 0 auto;
+      min-height:36px;
+      padding:8px 10px;
+      font-size:13px;
+    }
+    body.view-mobile [id^='meal-table-']{
+      overflow-x:auto;
+      max-width:100%;
+    }
+    body.view-mobile #manual-container .help{
+      font-size:11px;
+      line-height:1.35;
+      margin-top:2px;
+    }
+
+    @media (max-width: 420px){
+      body.view-mobile #manual-container .meal-compact .row[id^='food-row-']{
+        grid-template-columns:minmax(0,1fr) 104px auto !important;
+      }
+      body.view-mobile #manual-container .meal-head{
+        grid-template-columns:minmax(0,1fr) 98px auto !important;
+      }
+      body.view-mobile #step3 .split-actions .btn{
+        padding:7px 9px;
+        font-size:12px;
+      }
+    }
+
+
+/* ===== PRO APP SHELL + RESPONSIVE NAVIGATION ===== */
+:root{
+  --app-sidebar: 244px;
+  --app-header: 76px;
+  --app-bottom-nav: 70px;
+  --ease-pro: cubic-bezier(.2,.8,.2,1);
+}
+html{scroll-behavior:smooth}
+body{max-width:none!important;margin:0!important;padding:0!important;min-height:100vh}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(135deg,rgba(37,99,235,.035),transparent 40%);
+  z-index:-1;
+}
+.app-header{
+  position:sticky;
+  top:0;
+  z-index:40;
+  min-height:var(--app-header);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 24px;
+  background:rgba(255,255,255,.88);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+}
+.app-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.app-logo{
+  width:42px;height:42px;border-radius:14px;
+  display:grid;place-items:center;
+  color:#fff;font-weight:900;font-size:18px;
+  background:linear-gradient(135deg,#2563eb,#06b6d4);
+  box-shadow:0 10px 24px rgba(37,99,235,.25)
+}
+.app-title-wrap{min-width:0}
+.app-title{
+  margin:0!important;text-align:left!important;
+  font-size:18px!important;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.app-subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.app-layout{
+  width:min(1500px,100%);
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:var(--app-sidebar) minmax(0,1fr);
+  gap:22px;
+  padding:22px;
+}
+.tabs{
+  position:sticky!important;
+  top:calc(var(--app-header) + 18px)!important;
+  align-self:start;
+  max-width:none!important;
+  margin:0!important;
+  display:flex!important;
+  flex-direction:column;
+  gap:7px!important;
+  padding:10px!important;
+  border-radius:18px!important;
+  overflow:visible!important;
+}
+.tab-btn{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-align:left;
+  border-radius:12px!important;
+  padding:12px 13px!important;
+  white-space:normal!important;
+}
+.tab-btn::before{
+  content:attr(data-icon);
+  width:28px;height:28px;
+  display:grid;place-items:center;
+  border-radius:9px;
+  background:#f1f5f9;
+  flex:0 0 auto;
+}
+.tab-btn[aria-selected="true"]{
+  transform:translateX(3px);
+  box-shadow:0 8px 22px rgba(37,99,235,.12)
+}
+.content{
+  width:100%;
+  max-width:none!important;
+  margin:0!important;
+  min-width:0;
+}
+.tab-panel{
+  animation:pageEnter .32s var(--ease-pro);
+}
+@keyframes pageEnter{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+.phase-shell{
+  position:sticky;
+  top:calc(var(--app-header) + 10px);
+  z-index:19;
+  margin-bottom:14px;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:rgba(255,255,255,.9);
+  box-shadow:var(--shadow-sm);
+  backdrop-filter:blur(12px);
+}
+.phase-nav{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.phase-btn{
+  appearance:none;
+  border:1px solid transparent;
+  background:transparent;
+  border-radius:12px;
+  min-height:54px;
+  padding:8px 10px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:var(--muted);
+  text-align:left;
+  transition:.2s var(--ease-pro);
+}
+.phase-btn:hover{background:#f8fafc;color:var(--ink)}
+.phase-btn[aria-current="step"]{
+  color:#0f172a;
+  background:linear-gradient(180deg,#eff6ff,#dbeafe);
+  border-color:#bfdbfe;
+  box-shadow:0 7px 18px rgba(37,99,235,.12);
+}
+.phase-btn.is-complete .phase-index{background:#10b981}
+.phase-index{
+  width:30px;height:30px;border-radius:999px;
+  display:grid;place-items:center;
+  flex:0 0 auto;
+  color:#fff;font-weight:900;
+  background:#94a3b8;
+}
+.phase-btn[aria-current="step"] .phase-index{background:#2563eb}
+.phase-copy{min-width:0}
+.phase-copy b{display:block;font-size:13px}
+.phase-copy small{display:block;font-size:11px;color:inherit;opacity:.78}
+.phase-panel{
+  animation:phaseEnter .28s var(--ease-pro);
+}
+@keyframes phaseEnter{
+  from{opacity:0;transform:translateX(10px)}
+  to{opacity:1;transform:none}
+}
+.phase-actions{
+  margin-top:14px;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+.card{overflow:visible}
+.view-mode-wrap{margin:0!important;box-shadow:none!important;background:transparent!important;border:0!important;padding:0!important}
+.device-label{font-size:11px;color:var(--muted);font-weight:700}
+
+/* Desktop workspace */
+@media (min-width: 901px){
+  body.view-mobile .app-layout{grid-template-columns:1fr;max-width:520px}
+  body.view-mobile .tabs{
+    position:fixed!important;
+    left:10px;right:10px;bottom:10px;top:auto!important;
+    z-index:60;display:grid!important;
+    grid-template-columns:repeat(5,1fr);
+    flex-direction:row;
+  }
+  body.view-mobile .tab-btn{
+    padding:8px 4px!important;justify-content:center;text-align:center;
+    font-size:11px;flex-direction:column;gap:3px
+  }
+  body.view-mobile .tab-btn::before{width:26px;height:26px}
+  body.view-mobile .content{padding-bottom:90px}
+}
+
+/* Real mobile application */
+@media (max-width:900px){
+  :root{--app-header:64px}
+  .app-header{padding:10px 12px}
+  .app-logo{width:38px;height:38px;border-radius:12px}
+  .app-title{font-size:16px!important}
+  .app-subtitle{display:none}
+  .view-mode-wrap{display:none!important}
+  .app-layout{display:block;padding:10px 10px calc(var(--app-bottom-nav) + 24px)}
+  .tabs{
+    position:fixed!important;
+    left:8px;right:8px;bottom:8px;top:auto!important;
+    z-index:60;
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    flex-direction:row;
+    padding:6px!important;
+    border-radius:18px!important;
+    box-shadow:0 16px 40px rgba(15,23,42,.2)!important;
+  }
+  .tab-btn{
+    width:auto;
+    min-width:0;
+    padding:7px 2px!important;
+    justify-content:center;
+    text-align:center;
+    font-size:10px!important;
+    line-height:1.15;
+    flex-direction:column;
+    gap:2px;
+  }
+  .tab-btn::before{width:27px;height:27px;border-radius:9px}
+  .tab-btn[aria-selected="true"]{transform:translateY(-2px)}
+  .phase-shell{
+    top:calc(var(--app-header) + 5px);
+    padding:6px;
+    border-radius:14px;
+  }
+  .phase-nav{gap:4px}
+  .phase-btn{
+    min-height:48px;
+    padding:6px;
+    justify-content:center;
+    text-align:center;
+  }
+  .phase-index{width:27px;height:27px}
+  .phase-copy small{display:none}
+  .phase-copy b{font-size:11px}
+  .phase-actions{
+    position:sticky;
+    bottom:calc(var(--app-bottom-nav) + 8px);
+    z-index:18;
+    padding:8px;
+    margin:10px -2px -2px;
+    background:rgba(255,255,255,.92);
+    border:1px solid var(--border);
+    border-radius:14px;
+    backdrop-filter:blur(10px);
+  }
+  .phase-actions .btn{flex:1}
+  .card:hover{transform:none}
+}
+
+
+/* ===== V2 SIDEBAR ACCOUNT ===== */
+.tabs{
+  min-height:calc(100vh - var(--app-header) - 40px);
+}
+.sidebar-account-slot{
+  margin-top:auto;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+}
+.sidebar-account-slot #step0{
+  margin:0;
+  padding:10px;
+  border:0;
+  border-radius:14px;
+  background:linear-gradient(180deg,#f8fbff,#f1f6ff);
+  box-shadow:none;
+}
+.sidebar-account-slot #step0:hover{
+  transform:none;
+  box-shadow:none;
+  border-color:transparent;
+}
+.sidebar-account-slot #step0 > h3{
+  display:none;
+}
+.account-summary{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  margin-bottom:9px;
+}
+.account-avatar{
+  width:38px;
+  height:38px;
+  flex:0 0 auto;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,#2563eb,#06b6d4);
+  color:#fff;
+  font-weight:900;
+  box-shadow:0 8px 18px rgba(37,99,235,.22);
+}
+.account-copy{min-width:0}
+.account-name{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:13px;
+  font-weight:900;
+  color:#0f172a;
+}
+.account-phone{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  margin-top:1px;
+  color:#64748b;
+  font-size:11px;
+}
+.account-status{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-top:4px;
+  color:#059669;
+  font-size:10px;
+  font-weight:800;
+}
+.account-status::before{
+  content:"";
+  width:6px;height:6px;
+  border-radius:999px;
+  background:#10b981;
+  box-shadow:0 0 0 3px rgba(16,185,129,.12);
+}
+.sidebar-account-slot #phone-row{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:7px;
+}
+.sidebar-account-slot #phone-row .col{
+  min-width:0;
+  width:100%;
+}
+.sidebar-account-slot #phone-number{
+  min-height:36px;
+  padding:7px 9px;
+  font-size:12px;
+}
+.sidebar-account-slot #btn-phone-login,
+.sidebar-account-slot #btn-phone-logout{
+  width:100%;
+  min-height:36px;
+  padding:7px 10px;
+  font-size:12px;
+  box-shadow:none;
+}
+.sidebar-account-slot #phone-status{
+  margin-top:7px;
+  line-height:1.35;
+  font-size:10px;
+}
+.sidebar-account-slot #phone-logout-wrap{
+  margin:0!important;
+}
+.sidebar-account-slot #phone-logout-wrap::before{
+  content:"";
+  display:block;
+  height:1px;
+  margin:8px 0;
+  background:var(--border);
+}
+.sidebar-account-slot #btn-phone-logout{
+  background:#fff;
+  color:#475569;
+  border:1px solid #d9e3ef;
+}
+.sidebar-account-slot #btn-phone-logout:hover{
+  color:#dc2626;
+  border-color:#fecaca;
+  background:#fff7f7;
+}
+.mobile-login-host #step0{
+  margin-bottom:12px;
+}
+.mobile-login-host .account-summary{
+  margin-bottom:10px;
+}
+@media (max-width:900px){
+  .sidebar-account-slot{display:none}
+  .tabs{min-height:auto}
+  .mobile-login-host{
+    display:block;
+  }
+}
+@media (min-width:901px){
+  .mobile-login-host{display:none}
+}
+
+
+/* ===== V3 STABLE LAYOUT MANAGER ===== */
+:root{
+  --preview-phone-width:430px;
+  --preview-phone-height:820px;
+}
+
+/* Neutralize the old forced-mobile full-screen behavior on wide screens */
+@media (min-width:901px){
+  body.view-mobile{
+    padding:0!important;
+    max-width:none!important;
+  }
+  body.view-mobile .app-layout{
+    display:grid!important;
+    grid-template-columns:var(--app-sidebar) minmax(0,1fr)!important;
+    max-width:1500px!important;
+    padding:22px!important;
+  }
+  body.view-mobile .tabs{
+    position:sticky!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    top:calc(var(--app-header) + 18px)!important;
+    z-index:20!important;
+    display:flex!important;
+    grid-template-columns:none!important;
+    flex-direction:column!important;
+  }
+  body.view-mobile .tab-btn{
+    width:100%!important;
+    padding:12px 13px!important;
+    justify-content:flex-start!important;
+    text-align:left!important;
+    font-size:inherit!important;
+    flex-direction:row!important;
+    gap:10px!important;
+  }
+  body.view-mobile .tab-btn::before{
+    width:28px!important;
+    height:28px!important;
+  }
+  body.view-mobile .content{
+    padding-bottom:0!important;
+  }
+}
+
+/* Desktop preview stage */
+.mobile-preview-stage{
+  display:none;
+}
+body.layout-mobile-preview .app-layout{
+  grid-template-columns:1fr!important;
+  max-width:none!important;
+  padding:26px!important;
+}
+body.layout-mobile-preview .tabs{
+  display:none!important;
+}
+body.layout-mobile-preview .content{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+body.layout-mobile-preview .mobile-preview-stage{
+  display:block;
+  width:100%;
+}
+body.layout-mobile-preview .preview-phone{
+  width:min(var(--preview-phone-width),calc(100vw - 48px));
+  height:min(var(--preview-phone-height),calc(100vh - var(--app-header) - 48px));
+  min-height:640px;
+  margin:0 auto;
+  border:10px solid #111827;
+  border-radius:38px;
+  background:#eef3f9;
+  box-shadow:0 30px 80px rgba(15,23,42,.28);
+  overflow:hidden;
+  position:relative;
+}
+body.layout-mobile-preview .preview-phone::before{
+  content:"";
+  position:absolute;
+  top:7px;
+  left:50%;
+  transform:translateX(-50%);
+  width:110px;
+  height:24px;
+  border-radius:0 0 16px 16px;
+  background:#111827;
+  z-index:80;
+}
+body.layout-mobile-preview .preview-viewport{
+  height:100%;
+  overflow:auto;
+  padding-top:24px;
+  position:relative;
+  background:
+    radial-gradient(650px 280px at 10% -10%,rgba(37,99,235,.12),transparent 62%),
+    #eef3f9;
+}
+body.layout-mobile-preview .preview-viewport > .tab-panel{
+  padding:10px 10px 88px;
+}
+body.layout-mobile-preview .preview-bottom-nav{
+  position:absolute;
+  left:8px;
+  right:8px;
+  bottom:8px;
+  z-index:90;
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:3px;
+  padding:6px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:rgba(255,255,255,.94);
+  box-shadow:0 14px 34px rgba(15,23,42,.22);
+  backdrop-filter:blur(14px);
+}
+body.layout-mobile-preview .preview-bottom-nav .tab-btn{
+  width:auto!important;
+  min-width:0!important;
+  padding:7px 2px!important;
+  justify-content:center!important;
+  text-align:center!important;
+  font-size:10px!important;
+  line-height:1.15!important;
+  flex-direction:column!important;
+  gap:2px!important;
+  border-radius:12px!important;
+}
+body.layout-mobile-preview .preview-bottom-nav .tab-btn::before{
+  width:27px!important;
+  height:27px!important;
+}
+body.layout-mobile-preview .preview-bottom-nav .tab-btn[aria-selected="true"]{
+  transform:translateY(-2px)!important;
+}
+body.layout-mobile-preview .preview-viewport .phase-shell{
+  top:0!important;
+}
+body.layout-mobile-preview .preview-viewport .step1-grid,
+body.layout-mobile-preview .preview-viewport .strip-grid,
+body.layout-mobile-preview .preview-viewport .meal-head,
+body.layout-mobile-preview .preview-viewport .meal-compact .row,
+body.layout-mobile-preview .preview-viewport .supp-compact .row{
+  grid-template-columns:1fr!important;
+}
+body.layout-mobile-preview .preview-viewport .card{
+  padding:11px!important;
+  border-radius:13px!important;
+}
+body.layout-mobile-preview .preview-viewport .kpi .pill{
+  flex:1 1 100%!important;
+}
+body.layout-mobile-preview .preview-viewport table{
+  display:block!important;
+  width:100%!important;
+  overflow-x:auto!important;
+  white-space:nowrap!important;
+}
+body.layout-mobile-preview .preview-viewport input,
+body.layout-mobile-preview .preview-viewport select,
+body.layout-mobile-preview .preview-viewport textarea{
+  font-size:16px!important;
+}
+body.layout-mobile-preview .preview-viewport .phase-copy small{
+  display:none!important;
+}
+body.layout-mobile-preview .preview-viewport .split-actions .btn{
+  flex:1 1 100%!important;
+}
+body.layout-mobile-preview .preview-viewport .phase-actions{
+  position:sticky;
+  bottom:8px;
+  z-index:18;
+  padding:8px;
+  background:rgba(255,255,255,.92);
+  border:1px solid var(--border);
+  border-radius:14px;
+  backdrop-filter:blur(10px);
+}
+body.layout-mobile-preview #sidebar-account-slot{
+  display:none!important;
+}
+body.layout-mobile-preview #mobile-login-host{
+  display:block!important;
+}
+
+/* Real mobile stays controlled only by viewport width */
+@media (max-width:900px){
+  body.layout-mobile-preview .app-layout{
+    display:block!important;
+    padding:10px 10px calc(var(--app-bottom-nav) + 24px)!important;
+  }
+  body.layout-mobile-preview .tabs{
+    display:grid!important;
+  }
+  body.layout-mobile-preview .content{
+    display:block!important;
+  }
+  body.layout-mobile-preview .mobile-preview-stage{
+    display:none!important;
+  }
+}
+
+/* Small preview switch */
+#view-mode-seg button{
+  min-width:72px;
+}
+
+</style>
+</head>
+
+<body>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { 
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      deleteDoc,
+      doc,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBluU8UlxgCT4zRoNPTqyNCBj9-FOT-NlY",
+      authDomain: "tdee-nutrition.firebaseapp.com",
+      projectId: "tdee-nutrition",
+      storageBucket: "tdee-nutrition.firebasestorage.app",
+      messagingSenderId: "347942694448",
+      appId: "1:347942694448:web:2651189b0b5d23a80987f5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window.tdeeDb = db;
+    window.tdeeFs = { collection, getDocs, addDoc, deleteDoc, doc, getDoc, setDoc };
+
+    // Khi toàn bộ trang & script khác đã load, lúc này loadFoodDataFromDb chắc chắn tồn tại
+    window.addEventListener("load", () => {
+      if (window.loadFoodDataFromDb) {
+        window.loadFoodDataFromDb().catch(console.error);
+      }
+    });
+  </script>
+
+  <header class="app-header">
+    <div class="app-brand">
+      <div class="app-logo" aria-hidden="true">HL</div>
+      <div class="app-title-wrap">
+        <h1 class="app-title">Hùng Lê — Nutrition Planner</h1>
+        <div class="app-subtitle">Tính macro, xây thực đơn và theo dõi tiến độ</div>
+      </div>
+    </div>
+    <div class="view-mode-wrap">
+      <span class="device-label">Xem thử giao diện</span>
+      <div class="seg" id="view-mode-seg" role="group" aria-label="Chọn giao diện">
+        <button type="button" id="view-pc" aria-pressed="false">PC</button>
+        <button type="button" id="view-mobile" aria-pressed="false">Mobile</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-layout">
+  <nav class="tabs" role="tablist" aria-label="Điều hướng chính">
+    <button class="tab-btn" data-tab="generator" data-icon="✦" aria-selected="true">Tạo thực đơn</button>
+    <button class="tab-btn" data-tab="saved" data-icon="▣" aria-selected="false">Thực đơn đã lưu</button>
+    <button class="tab-btn" data-tab="food" data-icon="◫" aria-selected="false">Quản lý thực phẩm</button>
+    <button class="tab-btn" data-tab="tracking" data-icon="↗" aria-selected="false">Theo dõi</button>
+    <button class="tab-btn" data-tab="admin" data-icon="⚙" aria-selected="false">Chức năng admin</button>
+    <div class="sidebar-account-slot" id="sidebar-account-slot" aria-label="Tài khoản"></div>
+</nav>
+
+  <main class="content">
+
+    <div class="mobile-preview-stage" id="mobile-preview-stage" aria-label="Xem thử giao diện điện thoại">
+      <div class="preview-phone">
+        <div class="preview-viewport" id="preview-viewport"></div>
+        <nav class="preview-bottom-nav" id="preview-bottom-nav" aria-label="Điều hướng mobile preview"></nav>
+      </div>
+    </div>
+    <!-- Bước 1 -->
+    <section id="generator" class="tab-panel">
+      <div class="mobile-login-host" id="mobile-login-host"></div>
+
+      <div class="phase-shell" id="phase-shell">
+        <div class="phase-nav" role="navigation" aria-label="Các bước tạo thực đơn">
+          <button class="phase-btn" type="button" data-phase="1" aria-current="step">
+            <span class="phase-index">1</span>
+            <span class="phase-copy"><b>Thông tin</b><small>Hồ sơ cá nhân</small></span>
+          </button>
+          <button class="phase-btn" type="button" data-phase="2">
+            <span class="phase-index">2</span>
+            <span class="phase-copy"><b>Macro</b><small>Mục tiêu dinh dưỡng</small></span>
+          </button>
+          <button class="phase-btn" type="button" data-phase="3">
+            <span class="phase-index">3</span>
+            <span class="phase-copy"><b>Thực đơn</b><small>Xây dựng kế hoạch</small></span>
+          </button>
+        </div>
+      </div>
+
+      
+      
+      
+      <div id="step0" class="card">
+        <h3>Đăng nhập</h3>
+        <div class="row" id="phone-row">
+          <div class="col">
+            <label for="phone-number">Số điện thoại</label>
+            <input id="phone-number" placeholder="VD: 0988..." />
+          </div>
+          <div class="col" style="align-self:flex-end">
+            <button id="btn-phone-login" class="btn btn-pri">Xác nhận</button>
+          </div>
+        </div>
+        <p id="phone-status" class="help">Nhập số điện thoại để bắt đầu.</p>
+        <div class="split-actions" id="phone-logout-wrap" style="margin-top:6px; display:none">
+          <button id="btn-phone-logout" class="btn btn-sec">Đăng xuất</button>
+        </div>
+      </div>
+
+      <div id="step1" class="card phase-panel" data-phase-panel="1">
+        <h3>Thông tin cá nhân</h3>
+        <div class="step1-grid">
+          <div class="col"><label for="customer-name">Tên khách hàng</label><input id="customer-name" placeholder="VD: Nguyễn Văn A" /></div>
+          <div class="col"><label for="gender">Giới tính</label><select id="gender"><option value="male">Nam</option><option value="female">Nữ</option></select></div>
+          <div class="col"><label for="age">Tuổi</label><input id="age" type="number" min="10" max="100" value="30" /></div>
+          <div class="col"><label for="weight">Cân nặng (kg)</label><input id="weight" type="number" step="0.1" value="70" /></div>
+          <div class="col"><label for="height">Chiều cao (cm)</label><input id="height" type="number" value="170" /></div>
+          <div class="col"><label for="bf">BF (%)</label><input id="bf" type="number" step="0.1" min="0" max="70" placeholder="%" /></div>
+        </div>
+        <div class="phase-actions">
+          <button type="button" class="btn btn-pri" data-go-phase="2">Tiếp tục: Tính macro →</button>
+        </div>
+      </div>
+<div id="step2" class="card phase-panel" data-phase-panel="2">
+        <h3>Tính toán</h3>
+
+        <div class="strip-grid">
+          <div class="col">
+            <label for="goal">Mục tiêu</label>
+            <select id="goal">
+              <option value="muscle">Tăng cơ</option>
+              <option value="fatloss">Giảm mỡ</option>
+              <option value="maintain">Duy trì</option>
+            </select>
+          </div>
+
+          <div class="col">
+            <label for="activity">Mức hoạt động</label>
+            <select id="activity">
+              <option value="1.2">Ít vận động</option>
+              <option value="1.375">Vận động nhẹ</option>
+              <option value="1.55" selected>Vận động vừa</option>
+              <option value="1.725">Vận động nhiều</option>
+              <option value="1.9">Rất nhiều</option>
+            </select>
+          </div>
+
+          <div class="col hidden" id="calorie-adjust-wrap">
+            <label id="calorie-adjust-label" for="calorie-adjust">Calo điều chỉnh</label>
+            <input id="calorie-adjust" type="number" min="0" max="1000" value="200" />
+            
+          </div>
+
+          <div class="col">
+            <div class="mode">
+              <span class="tag">Chế độ macro</span>
+              <div class="seg" role="group" aria-label="Chọn chế độ macro">
+                <button id="mode-percent" type="button" aria-pressed="true">%</button>
+                <button id="mode-gram" type="button" aria-pressed="false">Gram/Kg</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack" style="margin-top:10px">
+          <div class="row" id="macro-percent">
+            <div class="col"><label>Protein %</label><input id="protein-p" type="number" min="0" max="100" value="30"/><progress id="protein-bar" max="100" value="30"></progress></div>
+            <div class="col"><label>Carb %</label><input id="carb-p" type="number" min="0" max="100" value="40"/><progress id="carb-bar" max="100" value="40"></progress></div>
+            <div class="col"><label>Fat %</label><input id="fat-p" type="number" min="0" max="100" value="30"/><progress id="fat-bar" max="100" value="30"></progress></div>
+          </div>
+
+          <div class="row hidden" id="macro-gram">
+            <div class="col"><label>Protein (g/kg)</label><input id="protein-g" type="number" step="0.1" value="2.0"/></div>
+            <div class="col"><label>Carb (g/kg)</label><input id="carb-g" type="number" step="0.1" value="4.0"/></div>
+            <div class="col"><label>Fat (g/kg)</label><input id="fat-g" type="number" step="0.1" value="1.0"/></div>
+          </div>
+
+          <div class="kpi">
+            <div class="pill"><b>TDEE mục tiêu:</b> <span id="tdee">0</span> kcal</div>
+            <div class="pill"><b>Macro (kcal):</b> <span id="macro-kcal">P0 / C0 / F0</span></div>
+            <div class="pill"><b>Macro (gram):</b> <span id="macro-gram-sum">P0 / C0 / F0</span></div>
+          </div>
+          <div class="split-actions hidden" id="step2-edit-actions">
+            <button id="btn-next-step3" class="btn btn-pri" type="button">Tiếp tục</button>
+          </div>
+          <div class="phase-actions">
+            <button type="button" class="btn btn-ghost" data-go-phase="1">← Quay lại</button>
+            <button type="button" class="btn btn-pri" data-go-phase="3">Tiếp tục: Tạo thực đơn →</button>
+          </div>
+        </div>
+      </div>
+      <!-- Bước 3 -->
+    
+      <div id="step3" class="card phase-panel" data-phase-panel="3">
+        <h3>Tạo thực đơn</h3>
+        <div class="stack">
+          <div id="plan-mode-box" class="plan-mode-box hidden">
+            <div class="col">
+              <label for="plan-mode">Kiểu tạo thực đơn</label>
+              <select id="plan-mode">
+                <option value="fixed" selected>Thực đơn cố định (1 thực đơn)</option>
+                <option value="daily">Thực đơn theo ngày (7 ngày/tuần)</option>
+              </select>
+            </div>
+            <div id="week-day-wrap" class="week-day-wrap hidden">
+              <span class="tag">Ngày</span>
+              <div class="seg" role="group" aria-label="Chọn ngày trong tuần" id="week-day-seg">
+                <button type="button" data-day="mon" aria-pressed="true">Thứ 2</button>
+                <button type="button" data-day="tue" aria-pressed="false">Thứ 3</button>
+                <button type="button" data-day="wed" aria-pressed="false">Thứ 4</button>
+                <button type="button" data-day="thu" aria-pressed="false">Thứ 5</button>
+                <button type="button" data-day="fri" aria-pressed="false">Thứ 6</button>
+                <button type="button" data-day="sat" aria-pressed="false">Thứ 7</button>
+                <button type="button" data-day="sun" aria-pressed="false">CN</button>
+              </div>
+            </div>
+          </div>
+          <div class="split-actions" style="justify-content:flex-start">
+            <button id="btn-show-manual" class="btn btn-pri">Lên thực đơn</button>
+            <button id="btn-add-meal" class="btn btn-warn hidden">Thêm bữa</button>
+            <button id="btn-toggle-steps" class="btn btn-ghost hidden">Quay lại</button>
+          </div>
+
+          <div id="manual-container" class="stack"></div>
+
+          <div class="split-actions">
+            <button id="btn-generate" class="btn btn-sec hidden">Hoàn tất</button>
+            <button id="btn-reset" class="btn btn-danger hidden">Tạo lại</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="result" class="stack"></div>
+    </section>
+
+    <!-- Tab Thực đơn đã lưu -->
+    <section id="saved" class="tab-panel hidden">
+      <div class="card">
+        <h3>Thực đơn đã lưu</h3>
+        <div id="saved-plans" class="stack"></div>
+        <div class="split-actions">
+          <button id="btn-change-excel-url" class="btn btn-ghost">Đổi URL Excel</button>
+          <button id="clear-all" class="btn btn-danger">Xóa tất cả</button>
+        </div>
+        <p id="excel-url-hint" class="help" style="margin-top:6px"></p>
+      </div>
+    </section>
+
+    <!-- Tab Quản lý thực phẩm -->
+    <section id="food" class="tab-panel hidden">
+        <p id="food-admin-status" style="margin-top:4px;font-size:0.9rem;opacity:0.8;"></p>
+      <div class="card"><h3>Danh sách thực phẩm</h3><div id="food-table" class="stack"></div></div>
+      <div class="card">
+        <h3>Thêm thực phẩm</h3>
+        <div class="row admin-form-row-3">
+          <div class="col"><label>Loại</label>
+            <select id="food-type">
+              <option value="protein">Protein</option><option value="fastCarbs">Tinh bột nhanh</option><option value="slowCarbs">Tinh bột chậm</option>
+              <option value="fat">Chất béo</option><option value="veggies">Rau</option><option value="fruits">Hoa quả</option><option value="drinks">Đồ uống</option><option value="others">Khác</option>
+            </select></div>
+          <div class="col"><label>Tên</label><input id="food-name" placeholder="Cá hồi"/></div>
+          <div class="col" style="align-self:flex-end"><button id="food-add" class="btn btn-pri">Thêm</button></div>
+        </div>
+        <div class="row admin-form-row-6">
+          <div class="col"><label>Calo/đv</label><input id="food-cal" type="number" /></div>
+          <div class="col"><label>Protein (g)</label><input id="food-protein" type="number" step="0.1"/></div>
+          <div class="col"><label>Carb (g)</label><input id="food-carbs" type="number" step="0.1"/></div>
+          <div class="col"><label>Fat (g)</label><input id="food-fat" type="number" step="0.1"/></div>
+          <div class="col"><label>Định lượng</label><input id="food-amount" type="number" value="100"/></div>
+          <div class="col"><label>Đơn vị</label><select id="food-unit"><option value="g">g</option><option value="ml">ml</option><option value="iu">iu</option></select></div>
+        </div>
+      </div>
+
+      <div class="card"><h3>Danh sách Supplement</h3><div id="supp-list-table" class="stack"></div></div>
+
+      <div class="card">
+        <h3>Thêm supplement</h3>
+        <div class="row admin-form-row-3">
+          <div class="col"><label>Loại</label>
+            <select id="supp-type">
+              <option value="protein">Protein</option><option value="fastCarbs">Tinh bột nhanh</option><option value="slowCarbs">Carb chậm</option>
+              <option value="fat">Chất béo</option><option value="others">Khác</option>
+            </select></div>
+          <div class="col"><label>Tên</label><input id="supp-name" placeholder="Whey"/></div>
+          <div class="col" style="align-self:flex-end"><button id="supp-add-item" class="btn btn-pri">Thêm</button></div>
+        </div>
+        <div class="row admin-form-row-6">
+          <div class="col"><label>Calo/đv</label><input id="supp-cal" type="number"/></div>
+          <div class="col"><label>Protein (g)</label><input id="supp-protein" type="number" step="0.1"/></div>
+          <div class="col"><label>Carb (g)</label><input id="supp-carbs" type="number" step="0.1"/></div>
+          <div class="col"><label>Fat (g)</label><input id="supp-fat" type="number" step="0.1"/></div>
+          <div class="col"><label>Định lượng</label><input id="supp-amount" type="number" value="1"/></div>
+          <div class="col"><label>Đơn vị</label><select id="supp-unit"><option value="g">g</option><option value="ml">ml</option><option value="iu">iu</option></select></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab Theo dõi -->
+    <section id="tracking" class="tab-panel hidden">
+      <div class="card">
+        <h3>Ghi chú & cân nặng</h3>
+        <div class="row">
+          <div class="col"><label>Ngày</label><input id="trk-date" type="date"/></div>
+          <div class="col"><label>Cân nặng (kg)</label><input id="trk-weight" type="number" step="0.1" value="70"/></div>
+          <div class="col">
+            <label>Tâm trạng</label>
+            <select id="trk-mood"><option>Rất tốt</option><option>Tốt</option><option selected>Bình thường</option><option>Không tốt</option><option>Rất tệ</option><option value="custom">Tự nhập…</option></select>
+          </div>
+        </div>
+        <div class="row"><div class="col"><input id="trk-mood-custom" class="hidden" placeholder="Nhập tâm trạng"/></div></div>
+        <div class="row"><div class="col"><label>Ghi chú</label><textarea id="trk-note"></textarea></div></div>
+        <div class="split-actions"><button id="trk-add" class="btn btn-pri">Thêm</button><button id="trk-clear" class="btn btn-danger">Xóa tất cả</button></div>
+      </div>
+
+      <div class="card"><h3>Biểu đồ cân nặng</h3><canvas id="weightChart" height="160"></canvas></div>
+      <div class="card"><h3>Lịch sử theo dõi</h3><div class="split-actions"><button id="trk-toggle" class="btn btn-ghost">Hiện/Ẩn</button></div><div id="trk-list" class="stack hidden"></div></div>
+    </section>
+    <!-- Tab Admin -->
+    <section id="admin" class="tab-panel hidden">
+      <div class="card">
+        <h3>Chức năng admin</h3>
+        <p class="help">Theo dõi số lượng tài khoản (số điện thoại) đang đăng ký.</p>
+        <div class="row">
+          <div class="col">
+            <strong>Tổng số tài khoản:</strong>
+            <span id="admin-total-users">0</span>
+          </div>
+          <div class="col" style="text-align:right">
+            <button id="admin-refresh" class="btn btn-sec">Tải lại danh sách</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Danh sách số điện thoại</h3>
+        <div id="admin-users-empty" class="help">Chưa có tài khoản nào.</div>
+        <div id="admin-users-table-wrap" class="stack hidden">
+          <table style="width:100%; border-collapse:collapse">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:4px 6px;border-bottom:1px solid #e5e7eb">Stt</th>
+                <th style="text-align:left;padding:4px 6px;border-bottom:1px solid #e5e7eb">Số điện thoại</th>
+                <th style="text-align:left;padding:4px 6px;border-bottom:1px solid #e5e7eb">Thời gian đăng ký</th>
+                <th style="text-align:left;padding:4px 6px;border-bottom:1px solid #e5e7eb">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  </div>
+<script>
+/***** STATE *****/
+const $ = (q, p=document) => p.querySelector(q);
+const $$ = (q, p=document) => [...p.querySelectorAll(q)];
+const fmt = n => Number.isFinite(n) ? (Math.round(n*10)/10) : 0;
+const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (ch)=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  "\"":"&quot;",
+  "'":"&#39;"
+}[ch]));
+const nl2brSafe = (v) => escapeHtml(v).replace(/\n/g, "<br/>");
+const BTN_LABEL_CREATE = "Hoàn tất (lưu vào Thực đơn đã lưu)";
+const BTN_LABEL_EDIT = "Lưu thay đổi";
+
+let foods = {
+  protein: [], fastCarbs: [], slowCarbs: [], fat: [], veggies: [], fruits: [], drinks: [], others: []
+};
+let supplements = {
+  protein: [], fastCarbs: [], slowCarbs: [], fat: [], others: []
+};
+let savedPlans = JSON.parse(localStorage.getItem("saved_plans_v3")||"[]");
+let tracking = JSON.parse(localStorage.getItem("tracking_v3")||"[]");
+let editingPlanIndex = null;
+let pendingEditPlan = null;
+let currentRegisteredAt = null;
+let macroMode = "percent";
+let weightChart = null;
+let mealIdSeed = 0;
+let currentPhone = null;
+let isAdminUser = false;
+let planMode = "fixed";
+let activeWeekDay = "mon";
+let fixedMealDraft = [];
+let weeklyMealDrafts = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] };
+
+function normalizePhone(input){
+  const digits = String(input || "").replace(/\D/g, "");
+  if(digits.startsWith("84") && digits.length === 11){
+    return "0" + digits.slice(2);
+  }
+  return digits;
+}
+function isValidPhoneVN(phone){
+  return /^0[35789]\d{8}$/.test(phone);
+}
+async function resolveAdminRole(phone){
+  try{
+    const db = window.tdeeDb;
+    const { doc, getDoc } = window.tdeeFs || {};
+    if(!db || !doc || !getDoc || !phone) return false;
+
+    // Preferred model: roles/admin with { phones: ["09..."] }
+    const roleSnap = await getDoc(doc(db, "roles", "admin"));
+    if(roleSnap && roleSnap.exists()){
+      const data = roleSnap.data() || {};
+      const phones = Array.isArray(data.phones) ? data.phones.map(normalizePhone) : [];
+      if(phones.includes(phone)) return true;
+    }
+
+    // Backward-compatible model: admins/{phone}
+    const adminSnap = await getDoc(doc(db, "admins", phone));
+    if(adminSnap && adminSnap.exists()) return true;
+  }catch(err){
+    console.warn("resolveAdminRole error", err);
+  }
+  return false;
+}
+const isAdmin = ()=> !!isAdminUser;
+function saveFoodsLocal(){ try{ localStorage.setItem("foods_local_"+(currentPhone||"anon"), JSON.stringify(foods)); }catch(_){} }
+function saveSuppsLocal(){ try{ localStorage.setItem("supplements_local_"+(currentPhone||"anon"), JSON.stringify(supplements)); }catch(_){} }
+function saveFoodsSmart(){ if(isAdmin()) saveFoods(); else saveFoodsLocal(); }
+function saveSuppsSmart(){ if(isAdmin()) saveSupps(); else saveSuppsLocal(); }
+function makeSyncDocId(prefix, type, item, idx){
+  const safeName = String(item?.name || "")
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 40) || "item";
+  return `${prefix}_${type}_${safeName}_${idx}`;
+}
+async function syncCollectionRows(collectionName, rows){
+  const db = window.tdeeDb;
+  const { collection, getDocs, setDoc, deleteDoc, doc } = window.tdeeFs || {};
+  if(!db || !collection || !getDocs || !setDoc || !deleteDoc || !doc) return;
+
+  const snap = await getDocs(collection(db, collectionName));
+  const existingIds = new Set(snap.docs.map(d => d.id));
+  const nextIds = new Set(rows.map(r => r.id));
+
+  for(const row of rows){
+    await setDoc(doc(db, collectionName, row.id), row.data);
+  }
+  for(const id of existingIds){
+    if(!nextIds.has(id)){
+      await deleteDoc(doc(db, collectionName, id));
+    }
+  }
+}
+function tryLoadLocalOverrides(){
+  if(isAdmin()) return;
+  try{
+    const f = localStorage.getItem("foods_local_"+(currentPhone||"anon"));
+    const s = localStorage.getItem("supplements_local_"+(currentPhone||"anon"));
+    if(f){ foods = JSON.parse(f) || foods; }
+    if(s){ supplements = JSON.parse(s) || supplements; }
+    if(typeof renderFoodTables==="function") renderFoodTables();
+  }catch(_){}
+}
+
+const saveFoods = ()=>{
+  (async()=>{
+    try{
+      if(!isAdmin()) return;
+      const rows = [];
+      for(const type in foods){
+        const arr = foods[type] || [];
+        arr.forEach((f, idx)=>{
+          rows.push({
+            id: makeSyncDocId("food", type, f, idx),
+            data: {
+            type,
+            name: f.name || "",
+            cal: Number(f.cal) || 0,
+            protein: Number(f.protein) || 0,
+            carbs: Number(f.carbs) || 0,
+            fat: Number(f.fat) || 0,
+            amount: Number(f.amount) || 0,
+            unit: f.unit || "g"
+            }
+          });
+        });
+      }
+      await syncCollectionRows("foods", rows);
+    }catch(err){
+      console.error("saveFoods Firestore error", err);
+    }
+  })();
+};
+const saveSupps = ()=>{
+  (async()=>{
+    try{
+      if(!isAdmin()) return;
+      const rows = [];
+      for(const type in supplements){
+        const arr = supplements[type] || [];
+        arr.forEach((s, idx)=>{
+          rows.push({
+            id: makeSyncDocId("supp", type, s, idx),
+            data: {
+            type,
+            name: s.name || "",
+            cal: Number(s.cal) || 0,
+            protein: Number(s.protein) || 0,
+            carbs: Number(s.carbs) || 0,
+            fat: Number(s.fat) || 0,
+            amount: Number(s.amount) || 0,
+            unit: s.unit || "g"
+            }
+          });
+        });
+      }
+      await syncCollectionRows("supplements", rows);
+    }catch(err){
+      console.error("saveSupps Firestore error", err);
+    }
+  })();
+};
+// Load foods & supplements from Firestore
+async function loadFoodDataFromDb(){
+  try{
+    const db = window.tdeeDb;
+    const { collection, getDocs } = window.tdeeFs || {};
+    if(!db || !collection || !getDocs){
+      console.warn("Firestore not ready");
+      return;
+    }
+    const freshFoods = { protein: [], fastCarbs: [], slowCarbs: [], fat: [], veggies: [], fruits: [], drinks: [], others: [] };
+    const freshSupps = { protein: [], fastCarbs: [], slowCarbs: [], fat: [], others: [] };
+
+    const foodSnap = await getDocs(collection(db, "foods"));
+    foodSnap.forEach(d=>{
+      const x = d.data() || {};
+      const bucket = freshFoods[x.type] || (freshFoods[x.type] = []);
+      bucket.push({
+        name: x.name || "",
+        cal: Number(x.cal) || 0,
+        protein: Number(x.protein) || 0,
+        carbs: Number(x.carbs) || 0,
+        fat: Number(x.fat) || 0,
+        amount: Number(x.amount) || 0,
+        unit: x.unit || "g"
+      });
+    });
+
+    const suppSnap = await getDocs(collection(db, "supplements"));
+    suppSnap.forEach(d=>{
+      const x = d.data() || {};
+      const bucket = freshSupps[x.type] || (freshSupps[x.type] = []);
+      bucket.push({
+        name: x.name || "",
+        cal: Number(x.cal) || 0,
+        protein: Number(x.protein) || 0,
+        carbs: Number(x.carbs) || 0,
+        fat: Number(x.fat) || 0,
+        amount: Number(x.amount) || 0,
+        unit: x.unit || "g"
+      });
+    });
+
+    foods = freshFoods;
+    supplements = freshSupps;
+    if(typeof renderFoodTables === "function"){
+      renderFoodTables();
+    }
+    console.log("Loaded foods & supplements from Firestore");
+  }catch(err){
+    console.error("loadFoodDataFromDb Firestore error", err);
+  }
+}
+
+const savePlans = ()=>{
+  localStorage.setItem("saved_plans_v3", JSON.stringify(savedPlans));
+  saveUserBundle();
+};
+const saveTracking = ()=>{
+  localStorage.setItem("tracking_v3", JSON.stringify(tracking));
+  saveUserBundle();
+};
+
+async function saveUserBundle(){
+  try{
+    if(!currentPhone) return;
+    const db = window.tdeeDb;
+    const { doc, setDoc } = window.tdeeFs || {};
+    if(!db || !doc || !setDoc) return;
+
+    const ref = doc(db, "users", currentPhone);
+    if(!currentRegisteredAt){
+      currentRegisteredAt = new Date().toISOString();
+    }
+
+    const profile = {
+      customerName: ($("#customer-name").value || "").trim(),
+      gender: $("#gender").value,
+      age: +$("#age").value || 0,
+      weight: +$("#weight").value || 0,
+      height: +$("#height").value || 0,
+      bf: +($("#bf").value || 0) || null,
+      goal: $("#goal").value,
+      activity: $("#activity").value,
+      calorieAdjust: +$("#calorie-adjust").value || 0,
+      macroMode,
+      proteinPercent: +$("#protein-p").value || 0,
+      carbPercent: +$("#carb-p").value || 0,
+      fatPercent: +$("#fat-p").value || 0,
+      proteinGPerKg: +($("#protein-g").value || 0) || 0,
+      carbGPerKg: +($("#carb-g").value || 0) || 0,
+      fatGPerKg: +($("#fat-g").value || 0) || 0
+    };
+
+    await setDoc(
+      ref,
+      {
+        phone: currentPhone,
+        registeredAt: currentRegisteredAt,
+        profile,
+        savedPlans,
+        tracking
+      },
+      { merge: true }
+    );
+  }catch(err){
+    console.error("saveUserBundle error", err);
+  }
+}
+
+async function loadUserBundle(phone){
+  const db = window.tdeeDb;
+  const { doc, getDoc } = window.tdeeFs || {};
+  if(!db || !doc || !getDoc) throw new Error("Firestore chưa sẵn sàng");
+
+  const ref = doc(db, "users", phone);
+
+  let isNew = false;
+  let data = {};
+  try{
+    const snap = await getDoc(ref);
+    if(snap && snap.exists()){
+      data = snap.data() || {};
+    }else{
+      isNew = true;
+      data = {};
+    }
+  }catch(err){
+    console.error("getDoc error", err);
+    throw err;
+  }
+
+  const profile = data.profile || {};
+  currentRegisteredAt = data.registeredAt || profile.createdAt || null;
+  if(isNew && !currentRegisteredAt){
+    currentRegisteredAt = new Date().toISOString();
+  }
+  savedPlans    = data.savedPlans || [];
+  tracking      = data.tracking || [];
+
+  try{
+    $("#customer-name").value = profile.customerName || "";
+    $("#gender").value        = profile.gender || "male";
+    $("#age").value           = profile.age || 30;
+    $("#weight").value        = profile.weight || 70;
+    $("#height").value        = profile.height || 170;
+    $("#bf").value            = (profile.bf !== undefined && profile.bf !== null) ? profile.bf : "";
+
+    $("#goal").value          = profile.goal || "muscle";
+    $("#activity").value      = profile.activity || "1.55";
+    $("#calorie-adjust").value= profile.calorieAdjust || 200;
+
+    macroMode = profile.macroMode || "percent";
+    if(macroMode === "gram"){
+      $("#macro-percent").classList.add("hidden");
+      $("#macro-gram").classList.remove("hidden");
+    }else{
+      $("#macro-percent").classList.remove("hidden");
+      $("#macro-gram").classList.add("hidden");
+    }
+
+    if(profile.proteinPercent != null) $("#protein-p").value = profile.proteinPercent;
+    if(profile.carbPercent    != null) $("#carb-p").value    = profile.carbPercent;
+    if(profile.fatPercent     != null) $("#fat-p").value     = profile.fatPercent;
+
+    if(profile.proteinGPerKg != null) $("#protein-g").value = profile.proteinGPerKg;
+    if(profile.carbGPerKg    != null) $("#carb-g").value    = profile.carbGPerKg;
+    if(profile.fatGPerKg     != null) $("#fat-g").value     = profile.fatGPerKg;
+
+    if(typeof updateAdjustVisibility === "function") updateAdjustVisibility();
+    if(typeof updateMacroView === "function") updateMacroView();
+    if(typeof updateMacroLabels === "function") updateMacroLabels();
+    if(typeof updateModeButtons === "function") updateModeButtons();
+    if(typeof renderSaved === "function") renderSaved();
+    if(typeof renderTrackingList === "function") renderTrackingList(false);
+    if(typeof renderChart === "function") renderChart();
+
+    setCalorieAdjustLabel();
+  }catch(uiErr){
+    console.error("UI update error khi loadUserBundle", uiErr);
+  }
+
+  localStorage.setItem("saved_plans_v3", JSON.stringify(savedPlans));
+  localStorage.setItem("tracking_v3", JSON.stringify(tracking));
+
+  return isNew;
+}
+
+
+async function loadAdminUsers(){
+  if(!isAdmin()){ alert("Chỉ tài khoản admin mới dùng được chức năng admin."); return; }
+
+  const db = window.tdeeDb;
+  const { collection, getDocs } = window.tdeeFs || {};
+  if(!db || !collection || !getDocs){
+    alert("Firestore chưa sẵn sàng cho chức năng admin.");
+    return;
+  }
+  const tbody = $("#admin-users-body");
+  const empty = $("#admin-users-empty");
+  const wrap  = $("#admin-users-table-wrap");
+  const totalEl = $("#admin-total-users");
+  if(!tbody) return;
+
+  tbody.innerHTML = "<tr><td colspan='4' style='padding:6px'>Đang tải...</td></tr>";
+
+  const formatRegisteredAt = (v)=>{
+    try{
+      if(!v) return "—";
+      if(typeof v === "string"){
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? v : d.toLocaleString("vi-VN");
+      }
+      if(typeof v.toDate === "function"){
+        return v.toDate().toLocaleString("vi-VN");
+      }
+      if(typeof v.seconds === "number"){
+        return new Date(v.seconds * 1000).toLocaleString("vi-VN");
+      }
+      return String(v);
+    }catch(_){
+      return "—";
+    }
+  };
+  const toRegisteredAtMs = (v)=>{
+    try{
+      if(!v) return -1;
+      if(typeof v === "string"){
+        const ms = new Date(v).getTime();
+        return Number.isFinite(ms) ? ms : -1;
+      }
+      if(typeof v.toDate === "function"){
+        const ms = v.toDate().getTime();
+        return Number.isFinite(ms) ? ms : -1;
+      }
+      if(typeof v.seconds === "number"){
+        const ms = v.seconds * 1000;
+        return Number.isFinite(ms) ? ms : -1;
+      }
+    }catch(_){}
+    return -1;
+  };
+
+  try{
+    const snap = await getDocs(collection(db, "users"));
+    const entries = [];
+    snap.forEach(d=>{
+      const data = d.data() || {};
+      const phone = data.phone || d.id;
+      const registeredAt = data.registeredAt || (data.profile && data.profile.createdAt) || null;
+      entries.push({
+        phone,
+        registeredAt,
+        registeredAtMs: toRegisteredAtMs(registeredAt)
+      });
+    });
+
+    // Mới đăng ký lên trên, cũ xuống dưới.
+    entries.sort((a, b)=> b.registeredAtMs - a.registeredAtMs);
+
+    const rows = entries.map((x, idx)=>`<tr>
+        <td style="padding:4px 6px;border-bottom:1px solid #f3f4f6">${idx + 1}</td>
+        <td style="padding:4px 6px;border-bottom:1px solid #f3f4f6">${escapeHtml(x.phone)}</td>
+        <td style="padding:4px 6px;border-bottom:1px solid #f3f4f6">${formatRegisteredAt(x.registeredAt)}</td>
+        <td style="padding:4px 6px;border-bottom:1px solid #f3f4f6">
+          <button class="btn btn-danger" data-admin-del="${escapeHtml(x.phone)}">Xóa</button>
+        </td>
+      </tr>`);
+
+    if(totalEl) totalEl.textContent = entries.length;
+    if(entries.length===0){
+      tbody.innerHTML = "";
+      if(empty) empty.classList.remove("hidden");
+      if(wrap) wrap.classList.add("hidden");
+    }else{
+      tbody.innerHTML = rows.join("");
+      if(empty) empty.classList.add("hidden");
+      if(wrap) wrap.classList.remove("hidden");
+    }
+  }catch(err){
+    console.error("loadAdminUsers error", err);
+    alert("Không tải được danh sách tài khoản admin.");
+  }
+}
+/***** CALC *****/
+function calcTDEE({weight, height, age, gender, activity, goal, adjust, bfPercent}){
+  // If body fat % provided, use Katch-McArdle; else fall back to Mifflin-St Jeor
+  let bmr;
+  if(typeof bfPercent === 'number' && bfPercent>0){
+    const lbm = weight * (1 - bfPercent/100); // Lean Body Mass (kg)
+    bmr = 370 + 21.6 * lbm;
+  } else {
+    bmr = (gender==="male") ? 10*weight + 6.25*height - 5*age + 5 : 10*weight + 6.25*height - 5*age - 161;
+  }
+  const tdee = bmr * activity;
+  if(goal==="muscle") return Math.round(tdee + (adjust||0));
+  if(goal==="fatloss") return Math.round(tdee - (adjust||0));
+  return Math.round(tdee);
+}
+function macroFromPercent(total,{p,c,f}){ const pg=(total*p/100)/4, cg=(total*c/100)/4, fg=(total*f/100)/9; return {pg,cg,fg,kcalP:pg*4,kcalC:cg*4,kcalF:fg*9}; }
+function macroFromPerKg(total,weight,{pgkg,cgkg,fgkg}){ const pg=pgkg*weight, cg=cgkg*weight, fg=fgkg*weight; const kcal=pg*4+cg*4+fg*9; const P=Math.round(pg*4/kcal*100), C=Math.round(cg*4/kcal*100), F=Math.round(fg*9/kcal*100); return {pg,cg,fg,kcalP:pg*4,kcalC:cg*4,kcalF:fg*9,p:P,c:C,f:F}; }
+
+/***** UI HELPERS *****/
+function updateAdminTabVisibility(){
+  const adminBtn = document.querySelector('.tab-btn[data-tab="admin"]');
+  if(!adminBtn) return;
+  adminBtn.classList.toggle("hidden", !isAdmin());
+}
+function switchTab(id){
+  $$(".tab-btn").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===id ? "true":"false"));
+  $$(".tab-panel").forEach(p=>p.classList.toggle("hidden", p.id!==id));
+  if(id==="saved"){ renderSaved(); refreshExcelConfigHint(); updateSavedTopControlsVisibility(); }
+  if(id==="food"){
+    renderFoodTables();
+    const st = document.getElementById("food-admin-status");
+    if(st){
+      st.textContent = "";
+    }
+  }
+  if(id==="tracking"){ renderTrackingList(false); renderChart(); $("#trk-date").value = new Date().toISOString().slice(0,10); }
+  if(id==="admin"){ loadAdminUsers(); }
+}
+function setCalorieAdjustLabel(){
+  const label = document.getElementById("calorie-adjust-label");
+  const goalVal = document.getElementById("goal")?.value;
+  if(!label || !goalVal) return;
+  if(goalVal === "muscle") label.textContent = "Calorie Surplus";
+  else if(goalVal === "fatloss") label.textContent = "Calorie Deficit";
+  else label.textContent = "Calo điều chỉnh";
+}
+function updateAdjustVisibility(){
+  $("#calorie-adjust-wrap").classList.toggle("hidden", !(["muscle","fatloss"].includes($("#goal").value)));
+  setCalorieAdjustLabel();
+}
+
+function updateMacroView(){
+  const weight=+$("#weight").value||70, height=+$("#height").value||170, age=+$("#age").value||30;
+  const gender=$("#gender").value, activity=+$("#activity").value||1.55, goal=$("#goal").value, adjust=+$("#calorie-adjust").value||0;
+  const bfPercent = +($("#bf").value||0) || undefined;
+  const total=calcTDEE({weight,height,age,gender,activity,goal,adjust,bfPercent});
+  $("#tdee").textContent=total;
+
+  if(macroMode==="percent"){
+    let p=+$("#protein-p").value||0, c=+$("#carb-p").value||0, f=Math.max(0,100-p-c);
+    $("#fat-p").value=f; $("#protein-bar").value=p; $("#carb-bar").value=c; $("#fat-bar").value=f;
+    const {pg,cg,fg,kcalP,kcalC,kcalF}=macroFromPercent(total,{p,c,f});
+    $("#macro-kcal").textContent=`P${Math.round(kcalP)} / C${Math.round(kcalC)} / F${Math.round(kcalF)}`;
+    $("#macro-gram-sum").textContent=`P${fmt(pg)}g / C${fmt(cg)}g / F${fmt(fg)}g`;
+    $("#protein-g").value=fmt(pg/weight); $("#carb-g").value=fmt(cg/weight); $("#fat-g").value=fmt(fg/weight);
+  }else{
+    const pgkg=+$("#protein-g").value||0, cgkg=+$("#carb-g").value||0; let fgkg=+$("#fat-g").value||0;
+    const remain=total-(pgkg*weight*4+cgkg*weight*4); fgkg = remain>0 ? (remain/9)/weight : 0; $("#fat-g").value=fmt(fgkg);
+    const {pg:PG,cg:CG,fg:FG,kcalP,kcalC,kcalF,p,c,f}=macroFromPerKg(total,weight,{pgkg,cgkg,fgkg});
+    $("#macro-kcal").textContent=`P${Math.round(kcalP)} / C${Math.round(kcalC)} / F${Math.round(kcalF)}`;
+    $("#macro-gram-sum").textContent=`P${fmt(PG)}g / C${fmt(CG)}g / F${fmt(FG)}g`;
+    $("#protein-p").value=p; $("#carb-p").value=c; $("#fat-p").value=f; $("#protein-bar").value=p; $("#carb-bar").value=c; $("#fat-bar").value=f;
+  }
+  updateMacroLabels();
+}
+
+function updateMacroLabels(){
+  try{
+    const $ = (q, p=document) => p.querySelector(q);
+    const fmt = n => Number.isFinite(n) ? (Math.round(n*10)/10) : 0;
+
+    function labelFor(inputId){
+      const input = document.getElementById(inputId);
+      if(!input) return null;
+      const col = input.closest('.col');
+      if(!col) return null;
+      return col.querySelector('label');
+    }
+
+    if(typeof macroMode === 'undefined') return;
+
+    if(macroMode === "percent"){
+      const pgkg = parseFloat(document.getElementById("protein-g")?.value) || 0;
+      const cgkg = parseFloat(document.getElementById("carb-g")?.value) || 0;
+      const fgkg = parseFloat(document.getElementById("fat-g")?.value) || 0;
+      const lp = labelFor("protein-p");
+      const lc = labelFor("carb-p");
+      const lf = labelFor("fat-p");
+      if(lp) lp.textContent = `Protein % (${fmt(pgkg)} g/kg)`;
+      if(lc) lc.textContent = `Carb % (${fmt(cgkg)} g/kg)`;
+      if(lf) lf.textContent = `Fat % (${fmt(fgkg)} g/kg)`;
+    }else{ // macroMode === "gram"
+      const pp = parseFloat(document.getElementById("protein-p")?.value) || 0;
+      const cp = parseFloat(document.getElementById("carb-p")?.value) || 0;
+      const fp = parseFloat(document.getElementById("fat-p")?.value) || 0;
+      const lp = labelFor("protein-g");
+      const lc = labelFor("carb-g");
+      const lf = labelFor("fat-g");
+      if(lp) lp.textContent = `Protein (g/kg) (${Math.round(pp)}%)`;
+      if(lc) lc.textContent = `Carb (g/kg) (${Math.round(cp)}%)`;
+      if(lf) lf.textContent = `Fat (g/kg) (${Math.round(fp)}%)`;
+    }
+  }catch(e){ /* fail-safe, avoid breaking UI */ }
+}
+function updateModeButtons(){
+  $("#mode-percent")?.setAttribute("aria-pressed", macroMode==="percent" ? "true" : "false");
+  $("#mode-gram")?.setAttribute("aria-pressed", macroMode==="gram" ? "true" : "false");
+}
+
+/* Validate phần 1 */
+function step1Valid(){
+  const name = ($("#customer-name").value||"").trim();
+  const age  = +$("#age").value, weight = +$("#weight").value, height = +$("#height").value;
+  const gender = $("#gender").value;
+  return name && age>0 && weight>0 && height>0 && (gender==="male"||gender==="female");
+}
+
+/***** EVENTS *****/
+$$(".tab-btn").forEach(b=>b.addEventListener("click", ()=>{
+  const tab = b.dataset.tab;
+  if(!currentPhone && tab !== "generator"){
+    alert("Vui lòng đăng ký / đăng nhập bằng số điện thoại trước.");
+    return;
+  }
+  // Chỉ tài khoản admin mới dùng được tab Chức năng admin; tab Quản lý thực phẩm mở cho mọi tài khoản
+  if((tab === "admin") && !isAdmin()){
+    alert("Chỉ tài khoản admin mới dùng được tab quản lý này.");
+    return;
+  }
+  switchTab(tab);
+}));
+$("#goal").addEventListener("change", ()=>{updateAdjustVisibility();updateMacroView();});
+["gender","age","weight","height","activity","calorie-adjust","bf"].forEach(id=>$("#"+id).addEventListener("input", updateMacroView));
+["protein-p","carb-p","fat-p"].forEach(id=>$("#"+id).addEventListener("input", ()=>{
+  macroMode="percent"; $("#macro-percent").classList.remove("hidden"); $("#macro-gram").classList.add("hidden");
+  updateMacroView(); updateModeButtons();
+}));
+["protein-g","carb-g","fat-g"].forEach(id=>$("#"+id).addEventListener("input", ()=>{
+  macroMode="gram"; $("#macro-percent").classList.add("hidden"); $("#macro-gram").classList.remove("hidden");
+  updateMacroView(); updateModeButtons();
+}));
+$("#mode-percent").addEventListener("click", ()=>{
+  macroMode="percent"; $("#macro-percent").classList.remove("hidden"); $("#macro-gram").classList.add("hidden");
+  updateMacroView(); updateModeButtons();
+});
+$("#mode-gram").addEventListener("click", ()=>{
+  macroMode="gram"; $("#macro-percent").classList.add("hidden"); $("#macro-gram").classList.remove("hidden");
+  updateMacroView(); updateModeButtons();
+});
+
+// Admin events
+const adminRefreshBtn = $("#admin-refresh");
+if(adminRefreshBtn){
+  adminRefreshBtn.addEventListener("click", ()=>loadAdminUsers());
+}
+
+document.addEventListener("click", async (e)=>{
+  const btn = e.target.closest ? e.target.closest("[data-admin-del]") : null;
+  if(!btn) return;
+  if(!isAdmin()){
+    alert("Bạn không có quyền thực hiện thao tác này.");
+    return;
+  }
+  const phone = btn.getAttribute("data-admin-del");
+  if(!phone) return;
+  if(!confirm(`Xóa tài khoản với SĐT ${phone}?`)) return;
+  try{
+    const db = window.tdeeDb;
+    const { doc, deleteDoc } = window.tdeeFs || {};
+    if(!db || !doc || !deleteDoc){
+      alert("Firestore chưa sẵn sàng cho chức năng admin.");
+      return;
+    }
+    await deleteDoc(doc(db, "users", phone));
+    if(currentPhone === phone){
+      currentPhone = null;
+      alert("Tài khoản hiện tại đang đăng nhập đã bị xóa. Vui lòng đăng nhập lại bằng SĐT khác.");
+    }
+    loadAdminUsers();
+  }catch(err){
+    console.error("delete user error", err);
+    alert("Không xóa được tài khoản: " + (err && err.message ? err.message : err));
+  }
+});
+
+// init
+updateAdjustVisibility(); updateMacroView(); updateModeButtons(); updateMacroLabels();
+</script>
+<script>
+/************ MEAL CREATION ************/
+const MEAL_OPT_SEP = "::";
+function encodeMealOpt(x){
+  return [x.source, x.type, encodeURIComponent(x.name)].join(MEAL_OPT_SEP);
+}
+function parseMealOpt(v){
+  if(!v) return null;
+  const [source, type, encName] = v.split(MEAL_OPT_SEP);
+  if(!source || !type || !encName) return null;
+  return { source, type, name: decodeURIComponent(encName) };
+}
+const listAllFoods = () => {
+  const foodItems = Object.entries(foods).flatMap(([t,arr])=>(arr||[]).map(x=>({
+    ...x, type:t, source:"food", label:x.name
+  })));
+  const suppItems = Object.entries(supplements).flatMap(([t,arr])=>(arr||[]).map(x=>({
+    ...x, type:t, source:"supp", label:`${x.name} (supp)`
+  })));
+  return [...foodItems, ...suppItems];
+};
+function nextMealId(){ mealIdSeed++; return mealIdSeed; }
+function getAllMealIds(){ return $$("#manual-container .card[id^='meal-']").map(el=>+el.id.replace("meal-","")); }
+const WEEK_DAY_LABELS = {
+  mon: "Thứ 2",
+  tue: "Thứ 3",
+  wed: "Thứ 4",
+  thu: "Thứ 5",
+  fri: "Thứ 6",
+  sat: "Thứ 7",
+  sun: "Chủ nhật"
+};
+const WEEK_DAY_ORDER = ["mon","tue","wed","thu","fri","sat","sun"];
+
+function isDailyPlanData(plan){
+  return !!(plan && plan.planType === "daily" && plan.weekMealDetails && typeof plan.weekMealDetails === "object");
+}
+function getPlanViewDay(plan){
+  if(!isDailyPlanData(plan)) return "mon";
+  const day = plan.savedViewDay;
+  if(day && WEEK_DAY_ORDER.includes(day) && Array.isArray(plan.weekMealDetails[day])) return day;
+  return "mon";
+}
+function getPlanMealsForView(plan){
+  if(isDailyPlanData(plan)){
+    const day = getPlanViewDay(plan);
+    return Array.isArray(plan.weekMealDetails[day]) ? plan.weekMealDetails[day] : [];
+  }
+  return Array.isArray(plan?.mealDetails) ? plan.mealDetails : [];
+}
+function setPlanViewDay(plan, day){
+  if(!isDailyPlanData(plan) || !WEEK_DAY_ORDER.includes(day)) return;
+  plan.savedViewDay = day;
+}
+
+function clearMealBuilder(){
+  const wrap = $("#manual-container");
+  if(wrap) wrap.innerHTML = "";
+  mealIdSeed = 0;
+}
+
+function collectMealDetailsFromUI(){
+  const meals = [];
+  const ids = getAllMealIds();
+  ids.forEach(mid=>{
+    const rows = $$("#meal-selects-"+mid+" .row[id^='food-row-']");
+    let items = [], totalP = 0, totalCb = 0, totalF = 0, totalK = 0;
+    rows.forEach((row, idx)=>{
+      const v = $("#food-select-"+mid+"-"+(idx+1))?.value;
+      const a = +$("#food-amount-"+mid+"-"+(idx+1))?.value||0;
+      const u = $("#food-unit-"+mid+"-"+(idx+1))?.value;
+      if(!v || a <= 0) return;
+      const ref = parseMealOpt(v);
+      const f = getFood(ref);
+      if(!f) return;
+      const m = calcItem(f, a, u);
+      items.push({food:f,amount:a,unit:u,calories:m.calories,protein:m.protein,carbs:m.carbs,fat:m.fat});
+      totalK += m.calories; totalP += m.protein; totalCb += m.carbs; totalF += m.fat;
+    });
+    if(items.length){
+      const isTimeDisabled = $("#meal-"+mid)?.dataset.timeDisabled === "1";
+      meals.push({
+        name: $("#meal-name-"+mid).value || `Bữa ${mid}`,
+        time: isTimeDisabled ? "" : ($("#meal-time-"+mid)?.value || ""),
+        items,
+        totalProtein: totalP,
+        totalCarbs: totalCb,
+        totalFat: totalF,
+        totalCalories: totalK,
+        supplements: []
+      });
+    }
+  });
+  return meals;
+}
+
+function cloneMealDetails(meals){
+  return JSON.parse(JSON.stringify(meals || []));
+}
+
+function renderMealDetailsToStep3(mealDetails){
+  clearMealBuilder();
+  const wrap = $("#manual-container");
+  if(!wrap) return;
+  if(!mealDetails || !mealDetails.length) return;
+  const allFoods = listAllFoods();
+  mealDetails.forEach((meal, idx)=>{
+    const id = nextMealId();
+    wrap.insertAdjacentHTML("beforeend", mealBlock(id, meal.name || `Bữa ${idx+1}`));
+
+    const timeInput = document.getElementById("meal-time-" + id);
+    const hasTime = Boolean(meal.time && meal.time !== "--:--");
+    setMealTimeEnabled(id, hasTime);
+    if(timeInput && hasTime){ timeInput.value = meal.time; }
+
+    const box = document.getElementById("meal-selects-" + id);
+    if(!box) return;
+    box.innerHTML = "";
+
+    (meal.items || []).forEach((it, j)=>{
+      const rowIndex = j + 1;
+      box.insertAdjacentHTML("beforeend", foodRow(id, rowIndex, listAllFoods(), rowIndex===1));
+
+      const sel = document.getElementById("food-select-" + id + "-" + rowIndex);
+      let optionVal = "";
+      if(it.food){
+        if(it.food.type && it.food.name){
+          optionVal = encodeMealOpt({
+            source: it.food.source || "food",
+            type: it.food.type,
+            name: it.food.name
+          });
+        }else if(it.food.name){
+          const found = allFoods.find(f=>f.name === it.food.name);
+          if(found) optionVal = encodeMealOpt(found);
+        }
+      }
+      if(sel && optionVal){
+        sel.value = optionVal;
+      }
+
+      const amt = document.getElementById("food-amount-" + id + "-" + rowIndex);
+      if(amt && typeof it.amount !== "undefined"){ amt.value = it.amount; }
+
+      const unit = document.getElementById("food-unit-" + id + "-" + rowIndex);
+      if(unit && it.unit){ unit.value = it.unit; }
+    });
+
+    if(typeof updateMeal === "function"){
+      updateMeal(id);
+    }
+  });
+}
+
+function syncCurrentModeDraft(){
+  const current = collectMealDetailsFromUI();
+  if(planMode === "daily"){
+    weeklyMealDrafts[activeWeekDay] = cloneMealDetails(current);
+  }else{
+    fixedMealDraft = cloneMealDetails(current);
+  }
+}
+
+function setWeekDayButtons(dayKey){
+  $$("#week-day-seg button[data-day]").forEach(btn=>{
+    btn.setAttribute("aria-pressed", btn.dataset.day === dayKey ? "true" : "false");
+  });
+}
+
+function updatePlanModeUI(){
+  const isDaily = planMode === "daily";
+  $("#week-day-wrap")?.classList.toggle("hidden", !isDaily);
+}
+
+function switchPlanMode(nextMode){
+  syncCurrentModeDraft();
+  planMode = nextMode === "daily" ? "daily" : "fixed";
+  updatePlanModeUI();
+  if(planMode === "daily"){
+    setWeekDayButtons(activeWeekDay);
+    const dayDraft = weeklyMealDrafts[activeWeekDay] || [];
+    if(dayDraft.length){
+      renderMealDetailsToStep3(dayDraft);
+    }else if((fixedMealDraft || []).length){
+      weeklyMealDrafts[activeWeekDay] = cloneMealDetails(fixedMealDraft);
+      renderMealDetailsToStep3(weeklyMealDrafts[activeWeekDay]);
+    }else{
+      showManual();
+    }
+  }else{
+    if((fixedMealDraft || []).length){
+      renderMealDetailsToStep3(fixedMealDraft);
+    }else{
+      showManual();
+    }
+  }
+}
+
+function mealBlock(mealId, labelText){
+  const all = listAllFoods();
+  return `
+    <div class="card meal-compact" id="meal-${mealId}" data-time-disabled="0">
+      <div class="meal-head">
+        <div class="col">
+          <div class="meal-title-row">
+            <label>Tên bữa</label>
+            <div class="actions-inline">
+              <button class="btn btn-dim btn-xxs" onclick="moveMealUp(${mealId})">↑</button>
+              <button class="btn btn-dim btn-xxs" onclick="moveMealDown(${mealId})">↓</button>
+            </div>
+          </div>
+          <input id="meal-name-${mealId}" value="${escapeHtml(labelText||`Bữa ${mealId}`)}" />
+        </div>
+        <div class="col">
+          <div class="meal-title-row">
+            <label>Thời gian</label>
+            <div class="actions-inline">
+              <button type="button" class="btn btn-dim btn-xxs" id="meal-time-toggle-${mealId}" onclick="toggleMealTime(${mealId})" aria-pressed="false">Tắt</button>
+            </div>
+          </div>
+          <input id="meal-time-${mealId}" type="time" value="07:00"/>
+        </div>
+        <div class="col delete" style="justify-self:end">
+          <button class="btn btn-danger btn-xxs" onclick="removeMeal(${mealId})">Xóa bữa</button>
+        </div>
+      </div>
+      <div class="stack" style="margin-top:6px">
+        <div class="mode">
+          
+          <div class="seg" role="group" aria-label="Lọc thực phẩm và supplement" id="meal-filter-${mealId}">
+            ${[
+              ["all","Tất cả"],["protein","Protein"],["fastCarbs","Tinh bột nhanh"],
+              ["slowCarbs","Tinh bột chậm"],["fat","Chất béo"],["veggies","Rau"],
+              ["fruits","Hoa quả"],["drinks","Đồ uống"],["supp","Supp"],["others","Khác"]
+            ].map(([v,txt])=>`<button type="button" data-type="${v}" aria-pressed="${v==='all'}">${txt}</button>`).join("")}
+          </div>
+        </div>
+        <div id="meal-selects-${mealId}" class="stack">${foodRow(mealId,1,all,true)}</div>
+        <div class="split-actions" style="justify-content:flex-start"><button class="btn btn-pri btn-xxs" onclick="addFoodRow(${mealId})">Thêm thực phẩm</button></div>
+        <div id="meal-table-${mealId}"></div>
+        <p id="meal-sum-${mealId}" class="help">Tổng: 0kcal (P0g, C0g, F0g)</p>
+        <p id="meal-remain-${mealId}" class="help hidden"></p>
+        <p id="meal-warn-${mealId}" class="help"></p>
+      </div>
+    </div>`;
+}
+function setMealTimeEnabled(mealId, enabled){
+  const card = document.getElementById("meal-" + mealId);
+  const input = document.getElementById("meal-time-" + mealId);
+  const btn = document.getElementById("meal-time-toggle-" + mealId);
+  if(!card || !input || !btn) return;
+  if(enabled){
+    card.dataset.timeDisabled = "0";
+    input.disabled = false;
+    input.classList.remove("hidden");
+    if(!input.value){
+      input.value = input.dataset.lastValue || "07:00";
+    }
+    btn.textContent = "Tắt";
+    btn.setAttribute("aria-pressed", "false");
+  }else{
+    card.dataset.timeDisabled = "1";
+    if(input.value){
+      input.dataset.lastValue = input.value;
+    }
+    input.value = "";
+    input.disabled = true;
+    input.classList.add("hidden");
+    btn.textContent = "Bật";
+    btn.setAttribute("aria-pressed", "true");
+  }
+}
+function toggleMealTime(mealId){
+  const card = document.getElementById("meal-" + mealId);
+  const isDisabled = card?.dataset.timeDisabled === "1";
+  setMealTimeEnabled(mealId, isDisabled);
+}
+document.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".seg button[data-type]");
+  if(!btn) return;
+  const seg = btn.parentElement;
+  const card = seg.closest(".card[id^='meal-']");
+  const mealId = +card.id.replace("meal-","");
+  seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed","false"));
+  btn.setAttribute("aria-pressed","true");
+  filterMeal(mealId, btn.dataset.type);
+});
+
+function foodRow(mealId, idx, list, showLabels){
+  return `
+    <div class="row" id="food-row-${mealId}-${idx}">
+      <div class="col">
+        <label class="${showLabels ? 'help' : 'sr-only'}">Thực phẩm</label>
+        <select id="food-select-${mealId}-${idx}" onchange="updateMeal(${mealId})">
+          <option value="">-- Chọn thực phẩm --</option>${list.map(f=>`<option value="${encodeMealOpt(f)}">${escapeHtml(f.label || f.name)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="col">
+        <label class="${showLabels ? 'help' : 'sr-only'}">Lượng & Đơn vị</label>
+        <div class="input-group">
+          <input id="food-amount-${mealId}-${idx}" type="number" placeholder="Lượng" oninput="updateMeal(${mealId})">
+          <select id="food-unit-${mealId}-${idx}" onchange="updateMeal(${mealId})">
+          <option value="g">g</option>
+          <option value="ml">ml</option>
+          <option value="iu">iu</option>
+        </select>
+        </div>
+      </div>
+      <div class="col">
+        <label class="sr-only">Thao tác</label>
+        <div class="actions-inline">
+          
+          <button class="btn btn-dim btn-xxs" onclick="removeFoodRow(${mealId},${idx})">Xóa</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* Ẩn/hiện Step 1 & 2 */
+function hideSteps(){ $("#step1").classList.add("hidden"); $("#step2").classList.add("hidden"); $("#btn-toggle-steps").classList.remove("hidden"); }
+function showSteps(){ $("#step1").classList.remove("hidden"); $("#step2").classList.remove("hidden"); $("#btn-toggle-steps").classList.add("hidden"); }
+function setGenerateButtonLabel(isEditing){
+  const btn = document.getElementById("btn-generate");
+  if(btn) btn.textContent = isEditing ? BTN_LABEL_EDIT : BTN_LABEL_CREATE;
+}
+function applyPlanProfileToForm(plan){
+  const p = (plan && plan.profileSnapshot) || {};
+  $("#customer-name").value = p.customerName ?? plan.customerName ?? "";
+  $("#gender").value = p.gender ?? plan.gender ?? "male";
+  $("#age").value = p.age ?? plan.age ?? 30;
+  $("#weight").value = p.weight ?? plan.weight ?? 70;
+  $("#height").value = p.height ?? plan.height ?? 170;
+  $("#bf").value = (p.bf !== undefined && p.bf !== null) ? p.bf : "";
+  $("#goal").value = p.goal ?? plan.goal ?? "muscle";
+  $("#activity").value = p.activity ?? $("#activity").value ?? "1.55";
+  $("#calorie-adjust").value = p.calorieAdjust ?? $("#calorie-adjust").value ?? 200;
+
+  macroMode = p.macroMode || "percent";
+  if(p.proteinPercent != null) $("#protein-p").value = p.proteinPercent;
+  if(p.carbPercent != null) $("#carb-p").value = p.carbPercent;
+  if(p.fatPercent != null) $("#fat-p").value = p.fatPercent;
+  if(p.proteinGPerKg != null) $("#protein-g").value = p.proteinGPerKg;
+  if(p.carbGPerKg != null) $("#carb-g").value = p.carbGPerKg;
+  if(p.fatGPerKg != null) $("#fat-g").value = p.fatGPerKg;
+  if(macroMode === "gram"){
+    $("#macro-percent").classList.add("hidden");
+    $("#macro-gram").classList.remove("hidden");
+  }else{
+    $("#macro-percent").classList.remove("hidden");
+    $("#macro-gram").classList.add("hidden");
+  }
+  updateAdjustVisibility();
+  updateMacroView();
+  updateModeButtons();
+  updateMacroLabels();
+}
+
+/* Toggle nút ở bước 3 theo 2 trạng thái */
+function toggleButtonsForConfig(inConfig){
+  $("#btn-show-manual").classList.toggle("hidden", inConfig);
+  $("#btn-add-meal").classList.toggle("hidden", !inConfig);
+  $("#btn-toggle-steps").classList.toggle("hidden", !inConfig);
+  $("#btn-generate").classList.toggle("hidden", !inConfig);
+  $("#btn-reset").classList.toggle("hidden", !inConfig);
+  $("#plan-mode-box")?.classList.toggle("hidden", !inConfig);
+}
+function setStep2EditActions(show){
+  const box = $("#step2-edit-actions");
+  if(!box) return;
+  box.classList.toggle("hidden", !show);
+}
+
+/* Reset hoàn toàn phần 3 về trạng thái chỉ có Khởi tạo */
+function resetStep3ToInitialView(clearEditing=true){
+  clearMealBuilder();
+  fixedMealDraft = [];
+  weeklyMealDrafts = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] };
+  activeWeekDay = "mon";
+  if($("#plan-mode")) $("#plan-mode").value = "fixed";
+  planMode = "fixed";
+  updatePlanModeUI();
+  setWeekDayButtons(activeWeekDay);
+  pendingEditPlan = null;
+  if(clearEditing){
+    editingPlanIndex = null;
+  }
+  setGenerateButtonLabel(false);
+  setStep2EditActions(false);
+  toggleButtonsForConfig(false);
+}
+
+/* Hiện lại 1) & 2) và reset phần 3 */
+function showStepsAndReset(){
+  showSteps();
+  resetStep3ToInitialView(false);
+  if($("#step3")) $("#step3").classList.add("hidden");
+  if(editingPlanIndex !== null){
+    setStep2EditActions(true);
+  }
+  $("#result").innerHTML="";
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* Khởi tạo bữa đầu */
+function showManual(){
+  clearMealBuilder();
+  const id = nextMealId();
+  $("#manual-container").insertAdjacentHTML("beforeend", mealBlock(id, `Bữa 1`));
+}
+
+/* Thêm/xóa bữa & items */
+function addMeal(){
+  if(!step1Valid()) return alert("Bạn cần nhập xong phần 1 (tên, tuổi, cân nặng, chiều cao, giới tính).");
+  if($("#manual-container").children.length===0){ showManual(); }
+  else { const id=nextMealId(); $("#manual-container").insertAdjacentHTML("beforeend", mealBlock(id, `Bữa ${getAllMealIds().length+1}`)); }
+  syncCurrentModeDraft();
+  hideSteps();
+  toggleButtonsForConfig(true);
+}
+function removeMeal(mealId){ $("#meal-"+mealId)?.remove(); }
+function addFoodRow(mealId){
+  const box=$("#meal-selects-"+mealId); const idx=box.querySelectorAll(".row[id^='food-row-']").length+1;
+  box.insertAdjacentHTML("beforeend", foodRow(mealId, idx, listAllFoods(), idx===1));
+}
+function removeFoodRow(mealId, idx){ $("#food-row-"+mealId+"-"+idx)?.remove(); updateMeal(mealId); }
+function moveMealUp(mealId){
+  const card = document.getElementById("meal-" + mealId);
+  if(!card) return;
+  const container = document.getElementById("manual-container");
+  if(!container) return;
+  const prev = card.previousElementSibling;
+  if(prev){
+    container.insertBefore(card, prev);
+  }
+}
+
+function moveMealDown(mealId){
+  const card = document.getElementById("meal-" + mealId);
+  if(!card) return;
+  const container = document.getElementById("manual-container");
+  if(!container) return;
+  const next = card.nextElementSibling;
+  if(next){
+    container.insertBefore(next, card);
+  }
+}
+
+
+/* Improved filter: keep selected options even if outside filter */
+function filterMeal(mealId, type){
+  const all = listAllFoods();
+  const filtered = (type==="all")
+    ? all
+    : (type==="supp")
+      ? all.filter(f=>f.source==="supp")
+      : all.filter(f=>f.type===type);
+  const rows = $$("#meal-selects-"+mealId+" .row[id^='food-row-']");
+
+  rows.forEach((row,i)=>{
+    const sel=$("#food-select-"+mealId+"-"+(i+1));
+    const cur=sel.value;
+
+    let currentObj=null;
+    if(cur){
+      const curRef = parseMealOpt(cur);
+      if(curRef){
+        currentObj = all.find(f=>f.source===curRef.source && f.type===curRef.type && f.name===curRef.name) || null;
+      }
+    }
+
+    let options = filtered.slice();
+    if(currentObj && !options.some(f=>f.source===currentObj.source && f.type===currentObj.type && f.name===currentObj.name)){
+      options = [currentObj, ...options];
+    }
+
+    sel.innerHTML = `<option value="">-- Chọn thực phẩm --</option>` +
+      options.map(f=>`<option value="${encodeMealOpt(f)}">${escapeHtml(f.label || f.name)}</option>`).join("");
+
+    if(cur) sel.value = cur;
+  });
+
+  updateMeal(mealId);
+}
+
+function getFood(ref){
+  if(!ref || !ref.type || !ref.name) return null;
+  const src = ref.source === "supp" ? supplements : foods;
+  const arr = src[ref.type] || [];
+  const found = arr.find(f=>f.name===ref.name);
+  if(!found) return null;
+  return { ...found, type: ref.type, source: ref.source || "food" };
+}
+function calcItem(food, amount, unit){
+  // Quy đổi theo đơn vị gốc trong dữ liệu (thường là 100g / 100ml)
+  const baseAmount = food.amount || 100;
+  const baseUnit   = food.unit || "g";
+
+  let factorAmount = amount;
+  let normalizedUnit = unit || baseUnit;
+
+  // Chuẩn hoá các đơn vị về gram tương đương (xấp xỉ cho đồ uống)
+  if (normalizedUnit === "mg") {
+    factorAmount = amount / 1000; // mg -> g
+    normalizedUnit = "g";
+  } else if (normalizedUnit === "ml") {
+    // giả định mật độ ~1g/ml cho nước / đồ uống
+    factorAmount = amount; // ml ~ g
+    normalizedUnit = "g";
+  } else if (normalizedUnit === "l") {
+    factorAmount = amount * 1000; // L -> ml ~ g
+    normalizedUnit = "g";
+  }
+
+  // Nếu đơn vị sau chuẩn hoá trùng với food.unit thì scale theo baseAmount,
+  // còn lại fallback đơn giản: tỷ lệ theo baseAmount.
+  let mult;
+  if (normalizedUnit === baseUnit) {
+    mult = factorAmount / baseAmount;
+  } else {
+    mult = factorAmount / baseAmount;
+  }
+
+  return {
+    calories: food.cal * mult,
+    protein:  food.protein * mult,
+    carbs:    food.carbs * mult,
+    fat:      food.fat * mult
+  };
+}
+
+function totalTargets(){
+  const weight=+$("#weight").value||70, height=+$("#height").value||170, age=+$("#age").value||30;
+  const gender=$("#gender").value, activity=+$("#activity").value||1.55, goal=$("#goal").value, adjust=+$("#calorie-adjust").value||0;
+  const bfPercent = +($("#bf").value||0) || undefined;
+  const total=calcTDEE({weight,height,age,gender,activity,goal,adjust,bfPercent});
+  if(macroMode==="percent"){ const p=+$("#protein-p").value||0, c=+$("#carb-p").value||0, f=100-p-c; const grams=macroFromPercent(total,{p,c,f}); return {total, targetP:grams.pg, targetC:grams.cg, targetF:grams.fg}; }
+  const pgkg=+$("#protein-g").value||0, cgkg=+$("#carb-g").value||0; const remain=total-(pgkg*weight*4+cgkg*weight*4); const fgkg=remain>0?remain/9/weight:0;
+  return {total, targetP:pgkg*weight, targetC:cgkg*weight, targetF:fgkg*weight};
+}
+
+function updateMeal(mealId){
+  const rows=$$("#meal-selects-"+mealId+" .row[id^='food-row-']");
+  let table=`<table><tr><th>Thực phẩm</th><th>Lượng</th><th>kcal</th><th>Protein</th><th>Carb</th><th>Fat</th></tr>`;
+  let sumC=0,sumP=0,sumCb=0,sumF=0;
+  rows.forEach((row,i)=>{
+    const val=$("#food-select-"+mealId+"-"+(i+1)).value, amount=+$("#food-amount-"+mealId+"-"+(i+1)).value||0, unit=$("#food-unit-"+mealId+"-"+(i+1)).value;
+    if(!val||amount<=0) return;
+    const ref=parseMealOpt(val); const f=getFood(ref); if(!f) return;
+    const m=calcItem(f,amount,unit); sumC+=m.calories; sumP+=m.protein; sumCb+=m.carbs; sumF+=m.fat;
+    const foodName = f.source === "supp" ? `${f.name} (supp)` : f.name;
+    table+=`<tr><td>${escapeHtml(foodName)}</td><td>${Math.round(amount)} ${escapeHtml(unit)}</td><td>${Math.round(m.calories)}</td><td>${fmt(m.protein)}</td><td>${fmt(m.carbs)}</td><td>${fmt(m.fat)}</td></tr>`;
+  });
+  table+="</table>"; $("#meal-table-"+mealId).innerHTML=table; $("#meal-sum-"+mealId).textContent=`Tổng: ${Math.round(sumC)}kcal (P${fmt(sumP)}g, C${fmt(sumCb)}g, F${fmt(sumF)}g)`;
+
+  // còn lại trong ngày - chỉ hiển thị ở bữa đang chỉnh
+  const mealIds = getAllMealIds();
+  let allP = 0, allC = 0, allF = 0, allK = 0;
+
+  mealIds.forEach(mid => {
+    $$("#meal-selects-"+mid+" .row[id^='food-row-']").forEach((row, idx) => {
+      const v = $("#food-select-"+mid+"-"+(idx+1))?.value;
+      const a = +$("#food-amount-"+mid+"-"+(idx+1))?.value || 0;
+      const u = $("#food-unit-"+mid+"-"+(idx+1))?.value;
+      if (!v || a <= 0) return;
+      const ref = parseMealOpt(v);
+      const f = getFood(ref);
+      if (!f) return;
+      const m = calcItem(f, a, u);
+      allP += m.protein;
+      allC += m.carbs;
+      allF += m.fat;
+      allK += m.calories;
+    });
+  });
+
+  const { total, targetP, targetC, targetF } = totalTargets();
+  const remP = Math.round(targetP - allP);
+  const remC = Math.round(targetC - allC);
+  const remF = Math.round(targetF - allF);
+  const remK = Math.round(total - allK);
+
+  // Ẩn hiển thị Tổng + Còn lại ở tất cả bữa khác
+  mealIds.forEach(mid => {
+    const sumEl  = $("#meal-sum-"+mid);
+    const remEl  = $("#meal-remain-"+mid);
+    const warnEl = $("#meal-warn-"+mid);
+    if (sumEl)  sumEl.classList.add("hidden");
+    if (remEl)  remEl.classList.add("hidden");
+    if (warnEl) warnEl.textContent = "";
+  });
+
+  // Chỉ hiện ở bữa đang cấu hình (mealId)
+  const sumEl  = $("#meal-sum-"+mealId);
+  const remEl  = $("#meal-remain-"+mealId);
+  const warnEl = $("#meal-warn-"+mealId);
+
+  if (sumEl) sumEl.classList.remove("hidden");
+  if (remEl) {
+    remEl.classList.remove("hidden");
+    remEl.textContent = `Còn lại trong ngày: P ${remP}g, C ${remC}g, F ${remF}g, kcal ${remK}`;
+  }
+  if (warnEl) {
+    warnEl.textContent = (remP < 0 || remC < 0 || remF < 0 || remK < 0)
+      ? "⚠️ Đã vượt mục tiêu ngày."
+      : "";
+  }
+
+}
+
+/********* NÚT *********/
+document.getElementById("btn-show-manual").addEventListener("click", ()=>{
+  if(!step1Valid()){ alert("Bạn cần nhập xong phần 1 (tên, tuổi, cân nặng, chiều cao, giới tính)."); window.scrollTo({top:0,behavior:"smooth"}); return; }
+  editingPlanIndex = null;
+  pendingEditPlan = null;
+  setStep2EditActions(false);
+  setGenerateButtonLabel(false);
+  if($("#manual-container").children.length===0){
+    if(planMode === "daily"){
+      if((weeklyMealDrafts[activeWeekDay] || []).length){
+        renderMealDetailsToStep3(weeklyMealDrafts[activeWeekDay]);
+      }else{
+        showManual();
+      }
+    }else{
+      if((fixedMealDraft || []).length){
+        renderMealDetailsToStep3(fixedMealDraft);
+      }else{
+        showManual();
+      }
+    }
+  }
+  if($("#step3")) $("#step3").classList.remove("hidden");
+  hideSteps();
+  toggleButtonsForConfig(true);
+});
+document.getElementById("btn-add-meal").addEventListener("click", addMeal);
+document.getElementById("btn-toggle-steps").addEventListener("click", showStepsAndReset);
+document.getElementById("btn-reset").addEventListener("click", ()=>{
+  clearMealBuilder();
+  fixedMealDraft = [];
+  weeklyMealDrafts = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] };
+  activeWeekDay = "mon";
+  setWeekDayButtons(activeWeekDay);
+  editingPlanIndex = null;
+  pendingEditPlan = null;
+  setStep2EditActions(false);
+  setGenerateButtonLabel(false);
+  $("#result").innerHTML="";
+  if($("#step3")) $("#step3").classList.remove("hidden");
+  toggleButtonsForConfig(true);
+});
+
+// Lưu (từ bước 3)
+function buildPlanObject(){
+  const name=$("#customer-name").value.trim()||"Khách hàng";
+  const weight=+$("#weight").value||0, height=+$("#height").value||0, age=+$("#age").value||0, gender=$("#gender").value, goal=$("#goal").value;
+  const {total,targetP,targetC,targetF}=totalTargets();
+  let meals = collectMealDetailsFromUI();
+  const profileSnapshot = {
+    customerName: name,
+    gender,
+    age,
+    weight,
+    height,
+    bf: +($("#bf").value || 0) || null,
+    goal,
+    activity: $("#activity").value,
+    calorieAdjust: +$("#calorie-adjust").value || 0,
+    macroMode,
+    proteinPercent: +$("#protein-p").value || 0,
+    carbPercent: +$("#carb-p").value || 0,
+    fatPercent: +$("#fat-p").value || 0,
+    proteinGPerKg: +($("#protein-g").value || 0) || 0,
+    carbGPerKg: +($("#carb-g").value || 0) || 0,
+    fatGPerKg: +($("#fat-g").value || 0) || 0
+  };
+  return {
+    customerName:name,
+    calories:total,
+    protein:targetP,
+    carbs:targetC,
+    fat:targetF,
+    meals:meals.length,
+    goal,
+    weight,
+    height,
+    age,
+    gender,
+    dateTime:new Date().toLocaleString('vi-VN',{dateStyle:'long', timeStyle:'short'}),
+    profileSnapshot,
+    mealDetails:meals
+  };
+}
+document.getElementById("btn-generate").addEventListener("click", ()=>{ 
+  try{
+    if(!step1Valid()) return alert("Vui lòng nhập xong phần 1 trước khi lưu.");
+    syncCurrentModeDraft();
+    if(planMode === "daily"){
+      const plan = buildPlanObject();
+      const weekMealDetails = {};
+      WEEK_DAY_ORDER.forEach(dayKey=>{
+        weekMealDetails[dayKey] = cloneMealDetails(weeklyMealDrafts[dayKey] || []);
+      });
+      const hasAnyMeal = WEEK_DAY_ORDER.some(dayKey => (weekMealDetails[dayKey] || []).length > 0);
+      if(!hasAnyMeal){
+        if(!confirm("Cả 7 ngày đều chưa có bữa nào. Vẫn lưu 1 plan tuần chỉ có macro?")) return;
+      }
+      plan.planType = "daily";
+      plan.weekMealDetails = weekMealDetails;
+      setPlanViewDay(plan, activeWeekDay);
+
+      if (typeof editingPlanIndex === "number" && editingPlanIndex >= 0 && editingPlanIndex < savedPlans.length) {
+        savedPlans[editingPlanIndex] = plan;
+        editingPlanIndex = null;
+        setGenerateButtonLabel(false);
+      } else {
+        savedPlans.push(plan);
+      }
+
+      savePlans(); $("#result").innerHTML="";
+      alert("Đã lưu 1 thực đơn tuần vào Thực đơn đã lưu!"); switchTab("saved");
+    } else {
+      const plan = buildPlanObject();
+      plan.planType = "fixed";
+      if(plan.mealDetails.length===0){ if(!confirm("Chưa có bữa nào. Vẫn lưu plan chỉ có macro?")) return; }
+
+      if (typeof editingPlanIndex === "number" && editingPlanIndex >= 0 && editingPlanIndex < savedPlans.length) {
+        // Đang SỬA một thực đơn có sẵn → ghi đè
+        savedPlans[editingPlanIndex] = plan;
+        editingPlanIndex = null;
+        setGenerateButtonLabel(false);
+      } else {
+        // Tạo thực đơn mới
+        savedPlans.push(plan);
+      }
+
+      savePlans(); $("#result").innerHTML="";
+      alert("Đã lưu vào Thực đơn đã lưu!"); switchTab("saved");
+    }
+  }catch(e){}
+});
+
+/************ SAVED (full bảng + in ảnh) ************/
+function renderSaved(forceOpenPlanIdx = null){
+  const wrap=$("#saved-plans");
+  if(!savedPlans.length){ wrap.innerHTML=`<p class="help">Chưa có thực đơn nào.</p>`; return; }
+  let keepOpenIdx = forceOpenPlanIdx;
+  if(keepOpenIdx === null || keepOpenIdx === undefined){
+    const opened = wrap.querySelector("details[data-plan-idx][open]");
+    if(opened){
+      const val = +opened.getAttribute("data-plan-idx");
+      if(Number.isInteger(val) && val >= 0) keepOpenIdx = val;
+    }
+  }
+  wrap.innerHTML="";
+  savedPlans.forEach((p,idx)=>{
+  const isDailyPlan = isDailyPlanData(p);
+  const viewDay = isDailyPlan ? getPlanViewDay(p) : null;
+  const viewedMeals = getPlanMealsForView(p);
+  const targetK = Math.max(1, (Number(p.protein)||0)*4 + (Number(p.carbs)||0)*4 + (Number(p.fat)||0)*9);
+  let pPct = Math.round(((Number(p.protein)||0)*4 / targetK) * 100);
+  let cPct = Math.round(((Number(p.carbs)||0)*4 / targetK) * 100);
+  let fPct = Math.max(0, 100 - pPct - cPct);
+  const pctFix = 100 - (pPct + cPct + fPct);
+  if(pctFix !== 0){ fPct += pctFix; }
+  const donutLabelPos = (startPct, segPct)=>{
+    const angle = (((startPct + segPct/2) / 100) * Math.PI * 2) - (Math.PI / 2);
+    const r = 39;
+    return {
+      x: 50 + Math.cos(angle) * r,
+      y: 50 + Math.sin(angle) * r
+    };
+  };
+  const pPos = donutLabelPos(0, pPct);
+  const cPos = donutLabelPos(pPct, cPct);
+  const fPos = donutLabelPos(pPct + cPct, fPct);
+	const sumK = Math.round(viewedMeals.reduce((acc, meal) => {
+	const suppK = (meal.supplements || []).reduce((s, x) => s + (Number(x.calories) || 0), 0);
+	return acc + (Number(meal.totalCalories) || 0) + suppK;
+	}, 0));
+	const sumP = fmt(viewedMeals.reduce((acc, meal) => {
+	const suppP = (meal.supplements || []).reduce((s, x) => s + (Number(x.protein) || 0), 0);
+	return acc + (Number(meal.totalProtein) || 0) + suppP;
+	}, 0));
+	const sumC = fmt(viewedMeals.reduce((acc, meal) => {
+	const suppC = (meal.supplements || []).reduce((s, x) => s + (Number(x.carbs) || 0), 0);
+	return acc + (Number(meal.totalCarbs) || 0) + suppC;
+	}, 0));
+	const sumF = fmt(viewedMeals.reduce((acc, meal) => {
+	const suppF = (meal.supplements || []).reduce((s, x) => s + (Number(x.fat) || 0), 0);
+	return acc + (Number(meal.totalFat) || 0) + suppF;
+	}, 0));
+    const card=document.createElement("div"); card.className="card";
+    card.innerHTML=`
+      <details data-plan-idx="${idx}">
+        <summary>Plan #${idx+1} — ${escapeHtml(p.dateTime)} — <b>${escapeHtml(p.customerName)}</b>${isDailyPlan ? ` (Tuần)` : ""} (kcal ${Math.round(Number(p.calories)||0)})</summary>
+        <div class="stack" style="margin-top:8px">
+          ${isDailyPlan ? `
+          <div class="mode">
+            <span class="tag">Xem ngày</span>
+            <div class="seg">
+              ${WEEK_DAY_ORDER.map(day=>`<button type="button" data-saved-day="${day}" data-plan-idx="${idx}" aria-pressed="${day===viewDay}">${escapeHtml(WEEK_DAY_LABELS[day] || day)}</button>`).join("")}
+            </div>
+          </div>` : ""}
+          <div class="kpi saved-kpi-desktop">
+            <div class="pill"><b>Macro mục tiêu:</b> P ${Math.round(p.protein)}g • C ${Math.round(p.carbs)}g • F ${Math.round(p.fat)}g</div>
+            <div class="pill"><b>Tổng thực tế:</b> kcal ${sumK} • P ${sumP}g • C ${sumC}g • F ${sumF}g</div>
+          </div>
+          <div class="saved-mobile-macro">
+            <div class="saved-macro-donut-wrap">
+              <div class="saved-macro-title">Macro mục tiêu</div>
+              <div class="saved-macro-donut" style="--p:${pPct};--c:${cPct};--f:${fPct};">
+                <span class="saved-donut-label" style="left:${pPos.x}%;top:${pPos.y}%;">${pPct}%</span>
+                <span class="saved-donut-label" style="left:${cPos.x}%;top:${cPos.y}%;">${cPct}%</span>
+                <span class="saved-donut-label" style="left:${fPos.x}%;top:${fPos.y}%;">${fPct}%</span>
+              </div>
+              <div class="saved-macro-legend">P ${Math.round(p.protein)}g • C ${Math.round(p.carbs)}g • F ${Math.round(p.fat)}g</div>
+            </div>
+            <div class="saved-actual-box"><b>Tổng thực tế</b><br/>kcal ${sumK}<br/>P ${sumP}g • C ${sumC}g • F ${sumF}g</div>
+          </div>
+          ${viewedMeals.length? viewedMeals.map(m=>`
+            <div class="card">
+              <h3>${escapeHtml(m.name)} (${escapeHtml(m.time||"--:--")})</h3>
+              <table><tr><th>Thực phẩm</th><th>Lượng</th><th>kcal</th><th>Protein</th><th>Carb</th><th>Fat</th></tr>
+                ${m.items.map(it=>`<tr><td>${escapeHtml(it.food.name)}</td><td>${Math.round(it.amount)} ${escapeHtml(it.unit)}</td><td>${Math.round(it.calories)}</td><td>${fmt(it.protein)}</td><td>${fmt(it.carbs)}</td><td>${fmt(it.fat)}</td></tr>`).join("")}
+                ${(m.supplements||[]).map(s=>`<tr><td>${escapeHtml(s.name)} (supp)</td><td>${Math.round(s.amount)} ${escapeHtml(s.unit)}</td><td>${Math.round(s.calories)}</td><td>${fmt(s.protein)}</td><td>${fmt(s.carbs)}</td><td>${fmt(s.fat)}</td></tr>`).join("")}
+              </table>
+              <p class="help"><b>Tổng:</b> ${Math.round((m.totalCalories||0) + (m.supplements||[]).reduce((s,x)=>s + (Number(x.calories)||0),0))}kcal — P${fmt((m.totalProtein||0) + (m.supplements||[]).reduce((s,x)=>s + (Number(x.protein)||0),0))}g • C${fmt((m.totalCarbs||0) + (m.supplements||[]).reduce((s,x)=>s + (Number(x.carbs)||0),0))}g • F${fmt((m.totalFat||0) + (m.supplements||[]).reduce((s,x)=>s + (Number(x.fat)||0),0))}g</p>
+            </div>`).join("") : `<p class="help">Plan này chưa có bữa nào.</p>`}
+          <div class="table-actions"><select id="export-mode-${idx}" class="export-mode"><option value="minimal" selected>In tối giản</option><option value="full">In đầy đủ</option></select>
+            <button class="btn btn-warn" data-saved-action="png" data-plan-idx="${idx}">In ảnh (PNG)</button>
+            <button class="btn btn-sec" id="export-sheet-${idx}" data-saved-action="excel" data-plan-idx="${idx}">In Excel</button>
+            <button class="btn btn-sec" data-saved-action="edit" data-plan-idx="${idx}">Sửa</button>
+            <button class="btn btn-danger" data-saved-action="delete" data-plan-idx="${idx}">Xóa</button>
+          </div>
+        </div>
+      </details>`;
+    wrap.appendChild(card);
+    const detailsEl = card.querySelector("details");
+    if(detailsEl){
+      detailsEl.addEventListener("toggle", updateSavedTopControlsVisibility);
+      const summaryEl = detailsEl.querySelector("summary");
+      if(summaryEl){
+        summaryEl.addEventListener("click", ()=>setTimeout(updateSavedTopControlsVisibility, 0));
+      }
+    }
+  });
+  if(Number.isInteger(keepOpenIdx) && keepOpenIdx >= 0){
+    const detailsToOpen = wrap.querySelector(`details[data-plan-idx="${keepOpenIdx}"]`);
+    if(detailsToOpen) detailsToOpen.open = true;
+  }
+  updateSavedTopControlsVisibility();
+}
+document.getElementById("clear-all").addEventListener("click", ()=>{ if(confirm("Xóa tất cả thực đơn đã lưu?")){ savedPlans=[]; savePlans(); renderSaved(); }});
+function deletePlan(i){ if(!confirm("Xóa thực đơn này?")) return; savedPlans.splice(i,1); savePlans(); renderSaved(); }
+document.addEventListener("click", (e)=>{
+  const dayBtn = e.target.closest("[data-saved-day][data-plan-idx]");
+  if(dayBtn){
+    const idx = +dayBtn.getAttribute("data-plan-idx");
+    const day = dayBtn.getAttribute("data-saved-day");
+    if(!Number.isInteger(idx) || idx < 0 || !WEEK_DAY_ORDER.includes(day)) return;
+    const plan = savedPlans[idx];
+    if(!plan || !isDailyPlanData(plan)) return;
+    setPlanViewDay(plan, day);
+    savePlans();
+    renderSaved(idx);
+    return;
+  }
+  const btn = e.target.closest("[data-saved-action][data-plan-idx]");
+  if(!btn) return;
+  const idx = +btn.getAttribute("data-plan-idx");
+  const action = btn.getAttribute("data-saved-action");
+  if(!Number.isInteger(idx) || idx < 0) return;
+
+  if(action === "png") return downloadPlanPNG(idx);
+  if(action === "excel") return exportPlanToGoogleSheet(idx);
+  if(action === "edit") return loadPlanToStep3(idx);
+  if(action === "delete") return deletePlan(idx);
+});
+function loadPlanMealsToStep3(plan){
+  if(isDailyPlanData(plan)){
+    const meals = weeklyMealDrafts[activeWeekDay] || [];
+    if(meals.length) renderMealDetailsToStep3(meals);
+    else showManual();
+  }else{
+    if(!plan.mealDetails || !plan.mealDetails.length){
+      showManual();
+    }else{
+      renderMealDetailsToStep3(plan.mealDetails);
+    }
+  }
+
+  const step3 = document.getElementById("step3");
+  if(step3){
+    step3.scrollIntoView({behavior:"smooth"});
+  }
+}
+function loadPlanToStep3(i){
+  editingPlanIndex = i;
+  const plan = savedPlans[i];
+  if(!plan){
+    alert("Không tìm thấy thực đơn để sửa.");
+    return;
+  }
+  setGenerateButtonLabel(true);
+  pendingEditPlan = plan;
+  if(isDailyPlanData(plan)){
+    planMode = "daily";
+    if($("#plan-mode")) $("#plan-mode").value = "daily";
+    activeWeekDay = getPlanViewDay(plan);
+    fixedMealDraft = [];
+    weeklyMealDrafts = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] };
+    WEEK_DAY_ORDER.forEach(day=>{
+      weeklyMealDrafts[day] = cloneMealDetails(plan.weekMealDetails[day] || []);
+    });
+    setWeekDayButtons(activeWeekDay);
+  }else{
+    planMode = "fixed";
+    if($("#plan-mode")) $("#plan-mode").value = "fixed";
+    activeWeekDay = "mon";
+    setWeekDayButtons(activeWeekDay);
+    weeklyMealDrafts = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] };
+    fixedMealDraft = cloneMealDetails(plan.mealDetails || []);
+  }
+  updatePlanModeUI();
+  // Chuyển sang tab Tạo thực đơn và chỉ mở step 1-2 trước
+  switchTab("generator");
+  toggleButtonsForConfig(false);
+  showSteps();
+  setStep2EditActions(true);
+  if($("#step3")) $("#step3").classList.add("hidden");
+
+  // Nạp lại dữ liệu Step 1 + Step 2 từ snapshot (nếu có), fallback theo dữ liệu plan cũ
+  applyPlanProfileToForm(plan);
+  document.getElementById("step2")?.scrollIntoView({behavior:"smooth"});
+}
+
+document.getElementById("btn-next-step3")?.addEventListener("click", ()=>{
+  if(!step1Valid()){
+    alert("Vui lòng hoàn thiện Thông tin cá nhân trước khi sang sửa thực đơn.");
+    return;
+  }
+  if(!pendingEditPlan){
+    alert("Không tìm thấy dữ liệu thực đơn cần sửa.");
+    return;
+  }
+  if($("#step3")) $("#step3").classList.remove("hidden");
+  loadPlanMealsToStep3(pendingEditPlan);
+  hideSteps();
+  setStep2EditActions(false);
+  toggleButtonsForConfig(true);
+});
+
+document.getElementById("plan-mode")?.addEventListener("change", (e)=>{
+  switchPlanMode(e.target.value);
+});
+document.getElementById("week-day-seg")?.addEventListener("click", (e)=>{
+  const btn = e.target.closest("button[data-day]");
+  if(!btn) return;
+  const nextDay = btn.dataset.day;
+  if(!nextDay || nextDay === activeWeekDay) return;
+  syncCurrentModeDraft();
+  activeWeekDay = nextDay;
+  setWeekDayButtons(activeWeekDay);
+  const dayDraft = weeklyMealDrafts[activeWeekDay] || [];
+  if(dayDraft.length){
+    renderMealDetailsToStep3(dayDraft);
+  }else{
+    showManual();
+  }
+});
+
+/************ EXPORT PNG ************/
+function makeExportHTML(plan, mode='minimal'){
+  const mealsForExport = getPlanMealsForView(plan);
+  const dayLabel = isDailyPlanData(plan) ? (WEEK_DAY_LABELS[getPlanViewDay(plan)] || "") : "";
+  let html=`<div class="export-wrap export-fixed" id="export-root" style="width:800px;max-width:none;">
+    <h2>Thực đơn dinh dưỡng</h2>
+    <p class="meta"><b>${plan.customerName}</b> • ${plan.weight}kg • ${plan.height}cm • ${plan.age}t • ${plan.gender==="male"?"Nam":"Nữ"}</p>
+    ${dayLabel ? `<p class="meta"><b>Ngày:</b> ${dayLabel}</p>` : ""}
+    <p class="meta">kcal: ${plan.calories} | Macro mục tiêu: P ${Math.round(plan.protein)}g • C ${Math.round(plan.carbs)}g • F ${Math.round(plan.fat)}g</p>
+    <p class="meta">Mục tiêu: ${plan.goal==="muscle"?"Tăng cơ":plan.goal==="fatloss"?"Giảm mỡ":"Duy trì"}</p><hr/>`;
+
+  mealsForExport.forEach(m=>{
+    // tính tổng của bữa bao gồm cả supplement
+    const suppCal = (m.supplements||[]).reduce((a,s)=>a+(Number(s.calories)||0),0);
+    const suppP   = (m.supplements||[]).reduce((a,s)=>a+(Number(s.protein)||0),0);
+    const suppC   = (m.supplements||[]).reduce((a,s)=>a+(Number(s.carbs)||0),0);
+    const suppF   = (m.supplements||[]).reduce((a,s)=>a+(Number(s.fat)||0),0);
+
+    const totalK = (m.totalCalories||0) + suppCal;
+    const totalP = (m.totalProtein||0) + suppP;
+    const totalC = (m.totalCarbs||0)   + suppC;
+    const totalF = (m.totalFat||0)     + suppF;
+
+    const colgroup = (mode==='minimal')
+      ? `<colgroup><col style="width:50%"><col style="width:25%"><col style="width:25%"></colgroup>`
+      : `<colgroup><col style="width:36.36%"><col style="width:18.18%"><col style="width:18.18%"><col style="width:9.09%"><col style="width:9.09%"><col style="width:9.09%"></colgroup>`;
+
+    html+=`<div class="meal"><h3>${m.name} (${m.time||"--:--"})</h3><table style="width:100%;display:table;table-layout:fixed;border-collapse:collapse;white-space:normal;">
+      ${colgroup}
+      ${mode==='minimal' 
+        ? `<tr><th>Thực phẩm</th><th>Lượng</th><th>kcal</th></tr>` 
+        : `<tr><th>Thực phẩm</th><th>Lượng</th><th>kcal</th><th>Protein</th><th>Carb</th><th>Fat</th></tr>`}
+      ${m.items.map(it=>
+        mode==='minimal'
+          ? `<tr><td>${it.food.name}</td><td>${Math.round(it.amount)} ${it.unit}</td><td>${Math.round(it.calories)}</td></tr>`
+          : `<tr><td>${it.food.name}</td><td>${Math.round(it.amount)} ${it.unit}</td><td>${Math.round(it.calories)}</td><td>${fmt(it.protein)}</td><td>${fmt(it.carbs)}</td><td>${fmt(it.fat)}</td></tr>`
+      ).join("")}
+      ${(m.supplements||[]).map(s=>
+        mode==='minimal'
+          ? `<tr><td>${s.name} (supp)</td><td>${Math.round(s.amount)} ${s.unit}</td><td>${Math.round(s.calories)}</td></tr>`
+          : `<tr><td>${s.name} (supp)</td><td>${Math.round(s.amount)} ${s.unit}</td><td>${Math.round(s.calories)}</td><td>${fmt(s.protein)}</td><td>${fmt(s.carbs)}</td><td>${fmt(s.fat)}</td></tr>`
+      ).join("")}
+      </table>
+      <p class="help"><b>Tổng:</b> ${Math.round(totalK)}kcal — P${fmt(totalP)}g • C${fmt(totalC)}g • F${fmt(totalF)}g</p>
+    </div>`;
+  });
+
+  // Tính tổng toàn plan (cả supplements)
+  const sumK = Math.round(mealsForExport.reduce((acc, m)=>{
+    const suppK=(m.supplements||[]).reduce((s,x)=>s+(Number(x.calories)||0),0);
+    return acc+(Number(m.totalCalories)||0)+suppK;
+  },0));
+  const sumP = fmt(mealsForExport.reduce((acc, m)=>{
+    const suppP=(m.supplements||[]).reduce((s,x)=>s+(Number(x.protein)||0),0);
+    return acc+(Number(m.totalProtein)||0)+suppP;
+  },0));
+  const sumC = fmt(mealsForExport.reduce((acc, m)=>{
+    const suppC=(m.supplements||[]).reduce((s,x)=>s+(Number(x.carbs)||0),0);
+    return acc+(Number(m.totalCarbs)||0)+suppC;
+  },0));
+  const sumF = fmt(mealsForExport.reduce((acc, m)=>{
+    const suppF=(m.supplements||[]).reduce((s,x)=>s+(Number(x.fat)||0),0);
+    return acc+(Number(m.totalFat)||0)+suppF;
+  },0));
+
+  html+=`<hr/><p><b>Tổng kết:</b> kcal: ${sumK} • Macro thực tế: P ${sumP}g • C ${sumC}g • F ${sumF}g</p>`;
+  html+=`</div>`;
+  return html;
+}
+
+function downloadPlanPNG(i){
+  const plan=savedPlans[i]; if(!plan) return; const mode=(document.getElementById(`export-mode-${i}`)?.value)||'minimal';
+  const temp=document.createElement("div"); temp.style.position="absolute"; temp.style.left="-9999px";
+  temp.innerHTML=makeExportHTML(plan, mode); document.body.appendChild(temp);
+  html2canvas(temp.querySelector("#export-root"), {scale:3, backgroundColor:"#ffffff", width:800}).then(canvas=>{
+    const a=document.createElement("a"); a.download=`ThucDon_${plan.customerName}_${plan.dateTime.replace(/[, :/]/g,"_")}.png`; a.href=canvas.toDataURL("image/png"); a.click(); temp.remove();
+  }).catch(()=>{ temp.remove(); alert("Lỗi export PNG"); });
+}
+
+/************ EXPORT GOOGLE SHEETS ************/
+const GSHEET_EXPORT_CONFIG_KEY = "gsheet_export_config_v1";
+function getGSheetConfig(){
+  try{
+    return JSON.parse(localStorage.getItem(GSHEET_EXPORT_CONFIG_KEY) || "{}");
+  }catch(_){
+    return {};
+  }
+}
+function saveGSheetConfig(cfg){
+  localStorage.setItem(GSHEET_EXPORT_CONFIG_KEY, JSON.stringify(cfg || {}));
+}
+function maskUrl(url){
+  if(!url) return "";
+  if(url.length <= 36) return url;
+  return `${url.slice(0, 30)}...${url.slice(-6)}`;
+}
+function refreshExcelConfigHint(){
+  const hint = document.getElementById("excel-url-hint");
+  if(!hint) return;
+  const cfg = getGSheetConfig();
+  const webAppUrl = (cfg.webAppUrl || "").trim();
+  if(!webAppUrl){
+    hint.textContent = "Excel URL: chưa cấu hình.";
+    return;
+  }
+  hint.textContent = `Excel URL: ${maskUrl(webAppUrl)}`;
+}
+function updateSavedTopControlsVisibility(){
+  const wrap = document.getElementById("saved-plans");
+  const btnChange = document.getElementById("btn-change-excel-url");
+  const btnClear = document.getElementById("clear-all");
+  const hint = document.getElementById("excel-url-hint");
+  if(!wrap || !btnChange || !btnClear || !hint) return;
+  const hasOpenPlan = !!wrap.querySelector("details[open]");
+  btnChange.classList.toggle("hidden", hasOpenPlan);
+  btnClear.classList.toggle("hidden", hasOpenPlan);
+  hint.classList.toggle("hidden", hasOpenPlan);
+}
+function changeExcelWebAppUrl(){
+  const cfg = getGSheetConfig();
+  const nextUrl = askWebAppUrl(cfg.webAppUrl || "");
+  if(nextUrl === null) return;
+  if(!nextUrl){
+    alert("Chưa thay đổi URL Excel.");
+    return;
+  }
+  saveGSheetConfig({ webAppUrl: nextUrl });
+  refreshExcelConfigHint();
+  alert("Đã cập nhật URL Excel.");
+}
+function askWebAppUrl(defaultValue=""){
+  const url = prompt("Nhập URL Web App của Google Apps Script (đã Deploy):", defaultValue || "");
+  if(url === null) return null;
+  const clean = String(url || "").trim();
+  if(!clean) return "";
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/i.test(clean)){
+    alert("URL chưa đúng định dạng Web App Apps Script.");
+    return "";
+  }
+  return clean;
+}
+function buildSheetRows(plan){
+  const rows = [];
+  const meals = getPlanMealsForView(plan);
+  meals.forEach((meal, mealIdx)=>{
+    const mergedItems = [
+      ...(meal.items || []).map(it=>({ kind:"food", data: it })),
+      ...(meal.supplements || []).map(s=>({ kind:"supp", data: s }))
+    ];
+
+    if(!mergedItems.length){
+      rows.push([
+        mealIdx + 1,
+        meal.name || `Bữa ${mealIdx + 1}`,
+        meal.time || "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]);
+    }else{
+      mergedItems.forEach((entry, itemIdx)=>{
+        const isFirst = itemIdx === 0;
+        if(entry.kind === "food"){
+          const it = entry.data;
+          rows.push([
+            isFirst ? (mealIdx + 1) : "",
+            isFirst ? (meal.name || `Bữa ${mealIdx + 1}`) : "",
+            isFirst ? (meal.time || "") : "",
+            (it.food && it.food.name) || "",
+            Math.round(Number(it.amount) || 0),
+            it.unit || "",
+            Math.round(Number(it.calories) || 0),
+            fmt(Number(it.protein) || 0),
+            fmt(Number(it.carbs) || 0),
+            fmt(Number(it.fat) || 0),
+            "food"
+          ]);
+        }else{
+          const s = entry.data;
+          rows.push([
+            isFirst ? (mealIdx + 1) : "",
+            isFirst ? (meal.name || `Bữa ${mealIdx + 1}`) : "",
+            isFirst ? (meal.time || "") : "",
+            `${s.name || ""} (supp)`,
+            Math.round(Number(s.amount) || 0),
+            s.unit || "",
+            Math.round(Number(s.calories) || 0),
+            fmt(Number(s.protein) || 0),
+            fmt(Number(s.carbs) || 0),
+            fmt(Number(s.fat) || 0),
+            "supp"
+          ]);
+        }
+      });
+    }
+
+    // Add one blank line between meals for easier reading in Sheets.
+    if(mealIdx < meals.length - 1){
+      rows.push([
+        "", "", "", "", "", "", "", "", "", "", ""
+      ]);
+    }
+  });
+  return rows;
+}
+document.getElementById("btn-change-excel-url")?.addEventListener("click", changeExcelWebAppUrl);
+function buildSheetRowsV2(plan){
+  const rows = [];
+  const meals = getPlanMealsForView(plan);
+  meals.forEach((meal, mealIdx)=>{
+    const mealLabel = `${meal.name || `Bữa ${mealIdx + 1}`}${meal.time ? ` (${meal.time})` : ""}`;
+    const mergedItems = [
+      ...(meal.items || []).map(it=>({ kind:"food", data: it })),
+      ...(meal.supplements || []).map(s=>({ kind:"supp", data: s }))
+    ];
+    if(!mergedItems.length){
+      rows.push([mealLabel, "", "", "", "", "", "", "", "", ""]);
+      return;
+    }
+    mergedItems.forEach((entry, itemIdx)=>{
+      const isFirst = itemIdx === 0;
+      if(entry.kind === "food"){
+        const it = entry.data;
+        const baseAmount = (it.food && Number(it.food.amount)) || 100;
+        rows.push([
+          isFirst ? mealLabel : "",
+          (it.food && it.food.name) || "",
+          Number(it.amount) || 0,
+          it.unit || "",
+          baseAmount,
+          Math.round(Number(it.calories) || 0),
+          fmt(Number(it.fat) || 0),
+          fmt(Number(it.carbs) || 0),
+          fmt(Number(it.protein) || 0),
+          ""
+        ]);
+      }else{
+        const s = entry.data;
+        rows.push([
+          isFirst ? mealLabel : "",
+          `${s.name || ""} (supp)`,
+          Number(s.amount) || 0,
+          s.unit || "",
+          Number(s.amount) || 0,
+          Math.round(Number(s.calories) || 0),
+          fmt(Number(s.fat) || 0),
+          fmt(Number(s.carbs) || 0),
+          fmt(Number(s.protein) || 0),
+          "supp"
+        ]);
+      }
+    });
+    if(mealIdx < meals.length - 1){
+      rows.push(["", "", "", "", "", "", "", "", "", ""]);
+    }
+  });
+  return rows;
+}
+function getPlanActualTotals(plan){
+  const meals = getPlanMealsForView(plan);
+  const calories = Math.round(meals.reduce((acc, meal)=>{
+    const supp = (meal.supplements||[]).reduce((s,x)=>s + (Number(x.calories)||0), 0);
+    return acc + (Number(meal.totalCalories)||0) + supp;
+  }, 0));
+  const protein = fmt(meals.reduce((acc, meal)=>{
+    const supp = (meal.supplements||[]).reduce((s,x)=>s + (Number(x.protein)||0), 0);
+    return acc + (Number(meal.totalProtein)||0) + supp;
+  }, 0));
+  const carbs = fmt(meals.reduce((acc, meal)=>{
+    const supp = (meal.supplements||[]).reduce((s,x)=>s + (Number(x.carbs)||0), 0);
+    return acc + (Number(meal.totalCarbs)||0) + supp;
+  }, 0));
+  const fat = fmt(meals.reduce((acc, meal)=>{
+    const supp = (meal.supplements||[]).reduce((s,x)=>s + (Number(x.fat)||0), 0);
+    return acc + (Number(meal.totalFat)||0) + supp;
+  }, 0));
+  return { calories, protein, carbs, fat };
+}
+function getTotalsFromMeals(meals){
+  const mealList = Array.isArray(meals) ? meals : [];
+  const calories = Math.round(mealList.reduce((acc, meal)=>{
+    const supp = (meal.supplements||[]).reduce((s,x)=>s + (Number(x.calories)||0), 0);
+    return acc + (Number(meal.totalCalories)||0) + supp;
+  }, 0));
+  const protein = fmt(mealList.reduce((acc, meal)=>{
+    const supp = (meal.supplements||[]).reduce((s,x)=>s + (Number(x.protein)||0), 0);
+    return acc + (Number(meal.totalProtein)||0) + supp;
+  }, 0));
+  const carbs = fmt(mealList.reduce((acc, meal)=>{
+    const supp = (meal.supplements||[]).reduce((s,x)=>s + (Number(x.carbs)||0), 0);
+    return acc + (Number(meal.totalCarbs)||0) + supp;
+  }, 0));
+  const fat = fmt(mealList.reduce((acc, meal)=>{
+    const supp = (meal.supplements||[]).reduce((s,x)=>s + (Number(x.fat)||0), 0);
+    return acc + (Number(meal.totalFat)||0) + supp;
+  }, 0));
+  return { calories, protein, carbs, fat };
+}
+function buildSheetRowsFromMeals(meals){
+  const rows = [];
+  const mealList = Array.isArray(meals) ? meals : [];
+  mealList.forEach((meal, mealIdx)=>{
+    const mergedItems = [
+      ...(meal.items || []).map(it=>({ kind:"food", data: it })),
+      ...(meal.supplements || []).map(s=>({ kind:"supp", data: s }))
+    ];
+    const mealLabel = `${meal.name || `Bữa ${mealIdx + 1}`}${meal.time ? ` (${meal.time})` : ""}`;
+    if(!mergedItems.length){
+      rows.push([mealLabel, "", "", "", "", "", "", "", "", ""]);
+      return;
+    }
+    mergedItems.forEach((entry, itemIdx)=>{
+      const isFirst = itemIdx === 0;
+      if(entry.kind === "food"){
+        const it = entry.data;
+        const baseAmount = (it.food && Number(it.food.amount)) || 100;
+        rows.push([
+          isFirst ? mealLabel : "",
+          (it.food && it.food.name) || "",
+          Number(it.amount) || 0,
+          it.unit || "",
+          baseAmount,
+          Math.round(Number(it.calories) || 0),
+          fmt(Number(it.fat) || 0),
+          fmt(Number(it.carbs) || 0),
+          fmt(Number(it.protein) || 0),
+          ""
+        ]);
+      }else{
+        const s = entry.data;
+        rows.push([
+          isFirst ? mealLabel : "",
+          `${s.name || ""} (supp)`,
+          Number(s.amount) || 0,
+          s.unit || "",
+          Number(s.amount) || 0,
+          Math.round(Number(s.calories) || 0),
+          fmt(Number(s.fat) || 0),
+          fmt(Number(s.carbs) || 0),
+          fmt(Number(s.protein) || 0),
+          "supp"
+        ]);
+      }
+    });
+    if(mealIdx < mealList.length - 1){
+      rows.push(["", "", "", "", "", "", "", "", "", ""]);
+    }
+  });
+  return rows;
+}
+function getWeeklyExportData(plan){
+  const weekRowsV2 = {};
+  const weekActualsByDay = {};
+  const weekTargetsByDay = {};
+  const targetPerDay = {
+    calories: Math.round(Number(plan.calories) || 0),
+    protein: fmt(Number(plan.protein) || 0),
+    carbs: fmt(Number(plan.carbs) || 0),
+    fat: fmt(Number(plan.fat) || 0)
+  };
+  WEEK_DAY_ORDER.forEach(day=>{
+    const meals = isDailyPlanData(plan) ? (plan.weekMealDetails?.[day] || []) : [];
+    weekRowsV2[day] = buildSheetRowsFromMeals(meals);
+    weekActualsByDay[day] = getTotalsFromMeals(meals);
+    weekTargetsByDay[day] = { ...targetPerDay };
+  });
+  const weekSummary = {
+    target: {
+      calories: targetPerDay.calories * WEEK_DAY_ORDER.length,
+      protein: fmt(targetPerDay.protein * WEEK_DAY_ORDER.length),
+      carbs: fmt(targetPerDay.carbs * WEEK_DAY_ORDER.length),
+      fat: fmt(targetPerDay.fat * WEEK_DAY_ORDER.length)
+    },
+    actual: WEEK_DAY_ORDER.reduce((acc, day)=>{
+      const d = weekActualsByDay[day] || { calories:0, protein:0, carbs:0, fat:0 };
+      acc.calories += Number(d.calories) || 0;
+      acc.protein += Number(d.protein) || 0;
+      acc.carbs += Number(d.carbs) || 0;
+      acc.fat += Number(d.fat) || 0;
+      return acc;
+    }, { calories:0, protein:0, carbs:0, fat:0 })
+  };
+  weekSummary.actual.protein = fmt(weekSummary.actual.protein);
+  weekSummary.actual.carbs = fmt(weekSummary.actual.carbs);
+  weekSummary.actual.fat = fmt(weekSummary.actual.fat);
+  return { weekRowsV2, weekTargetsByDay, weekActualsByDay, weekSummary };
+}
+async function exportPlanToGoogleSheet(i){
+  const plan = savedPlans[i];
+  if(!plan){
+    alert("Không tìm thấy thực đơn để xuất.");
+    return;
+  }
+  const btn = document.getElementById(`export-sheet-${i}`);
+  const cfg = getGSheetConfig();
+  let webAppUrl = cfg.webAppUrl || "";
+  if(!webAppUrl){
+    webAppUrl = askWebAppUrl("");
+    if(webAppUrl === null) return;
+    if(!webAppUrl) return;
+  }
+  saveGSheetConfig({ webAppUrl });
+  refreshExcelConfigHint();
+  // Plan tuần: xuất dạng week (1 sheet + tab giả). Plan cố định: day.
+  const exportScope = isDailyPlanData(plan) ? "week" : "day";
+  const selectedDay = getPlanViewDay(plan);
+  const selectedDayLabel = WEEK_DAY_LABELS[selectedDay] || selectedDay;
+  const weeklyData = isDailyPlanData(plan) ? getWeeklyExportData(plan) : null;
+
+  const payload = {
+    action: "create_sheet_and_write_plan",
+    template: "meal_sheet_v2",
+    sheetBaseName: "Lịch ăn",
+    exportScope,
+    planMeta: {
+      customerName: plan.customerName || "",
+      dateTime: plan.dateTime || "",
+      calories: Math.round(Number(plan.calories) || 0),
+      protein: fmt(Number(plan.protein) || 0),
+      carbs: fmt(Number(plan.carbs) || 0),
+      fat: fmt(Number(plan.fat) || 0),
+      goal: plan.goal || "",
+      weight: Number(plan.weight) || 0,
+      height: Number(plan.height) || 0,
+      age: Number(plan.age) || 0,
+      gender: plan.gender || "",
+      selectedDay,
+      selectedDayLabel
+    },
+    targets: {
+      calories: Math.round(Number(plan.calories) || 0),
+      protein: fmt(Number(plan.protein) || 0),
+      carbs: fmt(Number(plan.carbs) || 0),
+      fat: fmt(Number(plan.fat) || 0)
+    }
+  };
+  if(exportScope === "week" && weeklyData){
+    payload.weekDayOrder = WEEK_DAY_ORDER;
+    payload.weekDayLabels = WEEK_DAY_LABELS;
+    payload.weekRowsV2 = weeklyData.weekRowsV2;
+    payload.weekTargetsByDay = weeklyData.weekTargetsByDay;
+    payload.weekActualsByDay = weeklyData.weekActualsByDay;
+    payload.weekSummary = weeklyData.weekSummary;
+  }else{
+    payload.actuals = getPlanActualTotals(plan);
+    payload.rows = buildSheetRows(plan);
+    payload.rowsV2 = buildSheetRowsV2(plan);
+  }
+
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = "Đang gửi..."; }
+    let res = await fetch(webAppUrl, {
+      method: "POST",
+      // Use a simple request to reduce CORS preflight failures with Apps Script.
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    let data = null;
+    // If browser blocks CORS response read, fallback to fire-and-forget for local file usage.
+    if(res.type === "opaque"){
+      alert("Đã gửi yêu cầu xuất (chế độ local/no-cors). Vui lòng mở Google Sheet để kiểm tra tab mới đã được tạo.");
+      return;
+    }
+    const text = await res.text();
+    try{
+      data = JSON.parse(text);
+    }catch(_){
+      data = { ok:false, error:text || "Không đọc được phản hồi từ Apps Script." };
+    }
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    alert(`Đã xuất Google Sheets thành công: ${data.sheetName || "Lịch ăn mới"}`);
+    if(data.sheetUrl){ window.open(data.sheetUrl, "_blank"); }
+  }catch(err){
+    console.error(err);
+    const msg = (err && err.message) ? err.message : String(err);
+    // Retry with no-cors for file:// usage
+    if(/Failed to fetch/i.test(msg)){
+      try{
+        await fetch(webAppUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        alert("Đã gửi yêu cầu xuất (fallback no-cors). Vui lòng kiểm tra Google Sheet xem đã tạo tab mới chưa.");
+        return;
+      }catch(_){
+        // fall through to detailed error below
+      }
+    }
+    alert("Xuất Google Sheets thất bại.\n" + msg + "\n\nGợi ý: chạy app qua localhost thay vì mở file trực tiếp.");
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = "In Excel"; }
+  }
+}
+
+/************ FOOD & SUPPLEMENT MANAGEMENT ************/
+function renderFoodTables(){
+  const ft=document.createElement("div");
+  let rows=`<table><tr><th>Loại</th><th>Tên</th><th>kcal</th><th>P</th><th>C</th><th>F</th><th>Định lượng</th><th>Đơn vị</th><th>Hành động</th></tr>`;
+  for(const type in foods){
+    foods[type].forEach((f,idx)=>{
+      rows+=`<tr><td>${escapeHtml(type)}</td><td>${escapeHtml(f.name)}</td><td>${f.cal}</td><td>${f.protein}</td><td>${f.carbs}</td><td>${f.fat}</td><td>${f.amount}</td><td>${escapeHtml(f.unit)}</td>
+      <td class="table-actions"><button class="btn btn-sec" data-food-action="edit" data-food-type="${type}" data-food-idx="${idx}">Sửa</button><button class="btn btn-danger" data-food-action="delete" data-food-type="${type}" data-food-idx="${idx}">Xóa</button></td></tr>`;
+    });
+  }
+  rows+="</table>"; ft.innerHTML=rows; $("#food-table").innerHTML=""; $("#food-table").appendChild(ft);
+
+  const st=document.createElement("div");
+  let srows=`<table><tr><th>Loại</th><th>Tên</th><th>kcal</th><th>P</th><th>C</th><th>F</th><th>Định lượng</th><th>Đơn vị</th><th>Hành động</th></tr>`;
+  for(const type in supplements){
+    supplements[type].forEach((s,idx)=>{
+      srows+=`<tr><td>${escapeHtml(type)}</td><td>${escapeHtml(s.name)}</td><td>${s.cal}</td><td>${s.protein}</td><td>${s.carbs}</td><td>${s.fat}</td><td>${s.amount}</td><td>${escapeHtml(s.unit)}</td>
+      <td class="table-actions"><button class="btn btn-sec" data-supp-action="edit" data-supp-type="${type}" data-supp-idx="${idx}">Sửa</button><button class="btn btn-danger" data-supp-action="delete" data-supp-type="${type}" data-supp-idx="${idx}">Xóa</button></td></tr>`;
+    });
+  }
+  srows+="</table>"; st.innerHTML=srows; $("#supp-list-table").innerHTML=""; $("#supp-list-table").appendChild(st);
+}
+document.getElementById("food-add").addEventListener("click", ()=>{
+  const type=$("#food-type").value, name=$("#food-name").value.trim(), cal=+$("#food-cal").value, p=+$("#food-protein").value, c=+$("#food-carbs").value, f=+$("#food-fat").value, amount=+$("#food-amount").value, unit=$("#food-unit").value;
+  if(!name||!Number.isFinite(cal)||!Number.isFinite(p)||!Number.isFinite(c)||!Number.isFinite(f)||!Number.isFinite(amount)) return alert("Thiếu thông tin thực phẩm.");
+  foods[type].push({name,cal,protein:p,carbs:c,fat:f,amount,unit}); saveFoodsSmart(); renderFoodTables();
+  $("#food-name").value=""; $("#food-cal").value=""; $("#food-protein").value=""; $("#food-carbs").value=""; $("#food-fat").value="";
+});
+document.getElementById("supp-add-item").addEventListener("click", ()=>{
+  const type=$("#supp-type").value, name=$("#supp-name").value.trim(), cal=+$("#supp-cal").value, p=+$("#supp-protein").value, c=+$("#supp-carbs").value, f=+$("#supp-fat").value, amount=+$("#supp-amount").value, unit=$("#supp-unit").value;
+  if(!name||!Number.isFinite(cal)||!Number.isFinite(p)||!Number.isFinite(c)||!Number.isFinite(f)||!Number.isFinite(amount)) return alert("Thiếu thông tin supplement.");
+  supplements[type].push({name,cal,protein:p,carbs:c,fat:f,amount,unit}); saveSuppsSmart(); renderFoodTables();
+  $("#supp-name").value=""; $("#supp-cal").value=""; $("#supp-protein").value=""; $("#supp-carbs").value=""; $("#supp-fat").value="";
+});
+function delFood(type,idx){ if(confirm("Xóa?")){ foods[type].splice(idx,1); saveFoodsSmart(); renderFoodTables(); } }
+function delSupp(type,idx){ if(confirm("Xóa?")){ supplements[type].splice(idx,1); saveSuppsSmart(); renderFoodTables(); } }
+document.addEventListener("click", (e)=>{
+  const foodBtn = e.target.closest("[data-food-action][data-food-type][data-food-idx]");
+  if(foodBtn){
+    const action = foodBtn.getAttribute("data-food-action");
+    const type = foodBtn.getAttribute("data-food-type");
+    const idx = +foodBtn.getAttribute("data-food-idx");
+    if(action === "edit") return editFood(type, idx);
+    if(action === "delete") return delFood(type, idx);
+  }
+
+  const suppBtn = e.target.closest("[data-supp-action][data-supp-type][data-supp-idx]");
+  if(!suppBtn) return;
+  const action = suppBtn.getAttribute("data-supp-action");
+  const type = suppBtn.getAttribute("data-supp-type");
+  const idx = +suppBtn.getAttribute("data-supp-idx");
+  if(action === "edit") return editSupp(type, idx);
+  if(action === "delete") return delSupp(type, idx);
+});
+
+/************ TRACKING ************/
+function renderChart(){
+  const ctx=$("#weightChart").getContext("2d");
+  const data=tracking.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const labels=data.map(x=>x.date), weights=data.map(x=>x.weight);
+  if(weightChart){ weightChart.destroy(); } if(!labels.length) return;
+  weightChart=new Chart(ctx,{type:"line",data:{labels,datasets:[{label:"Cân nặng (kg)",data:weights}]},options:{responsive:true,scales:{y:{beginAtZero:false}}}});
+}
+function renderTrackingList(toggle=true){
+  const box=$("#trk-list"); if(toggle) box.classList.toggle("hidden");
+  if(!tracking.length){ box.innerHTML=`<p class="help">Chưa có ghi chú.</p>`; return; }
+  const html=tracking.slice().sort((a,b)=>b.date.localeCompare(a.date)).map((t,i)=>`
+    <div class="card"><h3>${escapeHtml(t.date)} — ${Number(t.weight)||0}kg</h3><p class="help">Tâm trạng: ${escapeHtml(t.mood)}</p><p>${nl2brSafe(t.note||"")}</p>
+    <div class="split-actions"><button class="btn btn-danger" data-trk-action="delete" data-trk-idx="${i}">Xóa</button></div></div>`).join("");
+  box.innerHTML=html;
+}
+function delTracking(sortedIndex){
+  const sorted = tracking
+    .map((item, idx)=>({ item, idx }))
+    .sort((a, b)=>b.item.date.localeCompare(a.item.date));
+  const target = sorted[sortedIndex];
+  if(!target) return;
+  if(!confirm("Xóa bản ghi theo dõi này?")) return;
+  tracking.splice(target.idx, 1);
+  saveTracking();
+  renderChart();
+  renderTrackingList(false);
+}
+document.addEventListener("click", (e)=>{
+  const trkBtn = e.target.closest("[data-trk-action='delete'][data-trk-idx]");
+  if(!trkBtn) return;
+  const idx = +trkBtn.getAttribute("data-trk-idx");
+  if(!Number.isInteger(idx) || idx < 0) return;
+  delTracking(idx);
+});
+document.getElementById("trk-toggle").addEventListener("click", ()=>renderTrackingList(true));
+document.getElementById("trk-mood").addEventListener("change", ()=>$("#trk-mood-custom").classList.toggle("hidden", $("#trk-mood").value!=="custom"));
+document.getElementById("trk-add").addEventListener("click", ()=>{
+  const date=$("#trk-date").value||new Date().toISOString().slice(0,10), weight=+$("#trk-weight").value||0, mood=($("#trk-mood").value==="custom"?$("#trk-mood-custom").value.trim():$("#trk-mood").value)||"", note=$("#trk-note").value||"";
+  if(!weight) return alert("Thiếu cân nặng."); tracking.push({date,weight,mood,note}); saveTracking(); renderChart(); renderTrackingList(false); $("#trk-note").value="";
+});
+document.getElementById("trk-clear").addEventListener("click", ()=>{ if(confirm("Xóa toàn bộ lịch sử?")){ tracking=[]; saveTracking(); renderChart(); renderTrackingList(false);} });
+
+/***** START *****/
+const VIEW_MODE_KEY = "ui_view_mode_v1";
+let viewMode = localStorage.getItem(VIEW_MODE_KEY) || (window.innerWidth <= 900 ? "mobile" : "pc");
+
+function updateViewModeButtons(){
+  const pcBtn = document.getElementById("view-pc");
+  const mobileBtn = document.getElementById("view-mobile");
+  if(pcBtn) pcBtn.setAttribute("aria-pressed", viewMode === "pc" ? "true" : "false");
+  if(mobileBtn) mobileBtn.setAttribute("aria-pressed", viewMode === "mobile" ? "true" : "false");
+}
+function applyViewMode(mode){
+  viewMode = mode === "mobile" ? "mobile" : "pc";
+  document.body.classList.toggle("view-mobile", viewMode === "mobile");
+  document.body.classList.toggle("view-pc", viewMode === "pc");
+  localStorage.setItem(VIEW_MODE_KEY, viewMode);
+  updateViewModeButtons();
+}
+document.getElementById("view-pc")?.addEventListener("click", ()=>applyViewMode("pc"));
+document.getElementById("view-mobile")?.addEventListener("click", ()=>applyViewMode("mobile"));
+applyViewMode(viewMode);
+
+switchTab("generator");
+updateAdminTabVisibility();
+
+if($("#step1")) $("#step1").classList.add("hidden");
+if($("#step2")) $("#step2").classList.add("hidden");
+if($("#step3")) $("#step3").classList.add("hidden");
+
+const phoneBtn = $("#btn-phone-login");
+if(phoneBtn){
+  phoneBtn.addEventListener("click", async ()=>{
+    const rawPhone = ($("#phone-number").value || "").trim();
+    const phone = normalizePhone(rawPhone);
+    if(!phone){
+      alert("Vui lòng nhập số điện thoại.");
+      return;
+    }
+    if(!isValidPhoneVN(phone)){
+      alert("Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng di động VN (VD: 09..., 03...).");
+      return;
+    }
+    try{
+      const statusEl = $("#phone-status");
+      if(statusEl) statusEl.textContent = "Đang kiểm tra dữ liệu và phân quyền...";
+      const isNew = await loadUserBundle(phone);
+      currentPhone = phone;
+      isAdminUser = await resolveAdminRole(phone);
+      updateAdminTabVisibility();
+
+      // Ẩn ô nhập SĐT, hiện nút thoát nhưng vẫn giữ dòng trạng thái
+      const row = $("#phone-row");
+      if(row) row.classList.add("hidden");
+      const logoutWrap = $("#phone-logout-wrap");
+      if(logoutWrap) logoutWrap.style.display = "flex";
+
+      $("#step1").classList.remove("hidden");
+      $("#step2").classList.remove("hidden");
+      $("#step3").classList.remove("hidden");
+
+      tryLoadLocalOverrides();
+      if(statusEl) statusEl.textContent = "";
+    }catch(err){
+      console.error(err);
+      alert("Có lỗi khi đăng nhập bằng số điện thoại:\n" + (err && err.message ? err.message : err));
+    }
+  });
+}
+
+// Nút thoát / đăng nhập SĐT khác
+const logoutBtn = $("#btn-phone-logout");
+if(logoutBtn){
+  logoutBtn.addEventListener("click", ()=>{
+    currentPhone = null;
+    isAdminUser = false;
+    updateAdminTabVisibility();
+    if($("#phone-number")) $("#phone-number").value = "";
+    const row = $("#phone-row");
+    if(row) row.classList.remove("hidden");
+    const logoutWrap = $("#phone-logout-wrap");
+    if(logoutWrap) logoutWrap.style.display = "none";
+    const statusEl = $("#phone-status");
+    if(statusEl) statusEl.textContent = "Nhập số điện thoại để bắt đầu.";
+
+    if($("#step1")) $("#step1").classList.add("hidden");
+    if($("#step2")) $("#step2").classList.add("hidden");
+    if($("#step3")) $("#step3").classList.add("hidden");
+  });
+}
+</script>
+
+<script>
+(function(){
+  function ensureCalorieSeg(){
+    var wrap = document.getElementById('calorie-adjust-wrap');
+    if(!wrap) return;
+
+    // Make sure header container exists
+    var head = wrap.querySelector('.calorie-head');
+    if(!head){
+      head = document.createElement('div');
+      head.className = 'calorie-head';
+      var label = wrap.querySelector('label[for="calorie-adjust"]') || wrap.querySelector('label');
+      if(label){ head.appendChild(label); }
+      wrap.insertBefore(head, wrap.firstChild);
+    }
+
+    // Create segmented container if missing
+    var seg = document.getElementById('calorie-pcts-head');
+    if(!seg){
+      seg = document.createElement('div');
+      seg.id = 'calorie-pcts-head';
+      seg.className = 'seg';
+      seg.setAttribute('role','group');
+      head.appendChild(seg);
+    }
+
+    // Update buttons based on goal
+    var goalEl = document.getElementById('goal');
+    var goal = goalEl ? goalEl.value : null;
+    var htmlBtns;
+    if(goal === 'muscle'){
+      // Calorie Surplus: 10% 15% 20%
+      htmlBtns = '<button type="button" data-pct="10" aria-pressed="false">10%</button>' +
+                 '<button type="button" data-pct="15" aria-pressed="false">15%</button>' +
+                 '<button type="button" data-pct="20" aria-pressed="false">20%</button>';
+    } else {
+      // Calorie Deficit & others: giữ nguyên 5% 10% 15%
+      htmlBtns = '<button type="button" data-pct="5" aria-pressed="false">5%</button>' +
+                 '<button type="button" data-pct="10" aria-pressed="false">10%</button>' +
+                 '<button type="button" data-pct="15" aria-pressed="false">15%</button>';
+    }
+    seg.innerHTML = htmlBtns;
+
+    // Cố gắng đánh dấu lại % gần đúng với Calorie Adjust đang lưu
+    try{
+      var inputAdj = document.getElementById('calorie-adjust');
+      var adjustVal = inputAdj ? parseInt(inputAdj.value, 10) || 0 : 0;
+      if(adjustVal > 0){
+        var baseTdee = computeBaseTDEE();
+        if(baseTdee && baseTdee > 0){
+          var approxPct = Math.round(adjustVal / baseTdee * 100);
+          var bestBtn = null;
+          var bestDiff = Infinity;
+          seg.querySelectorAll('button').forEach(function(b){
+            var p = parseInt(b.dataset.pct, 10);
+            var diff = Math.abs(p - approxPct);
+            if(diff < bestDiff){
+              bestDiff = diff;
+              bestBtn = b;
+            }
+          });
+          // Chỉ set nếu gần đúng (sai lệch <= 3%)
+          if(bestBtn && bestDiff <= 3){
+            bestBtn.setAttribute('aria-pressed','true');
+          }
+        }
+      }
+    }catch(e){ /* bỏ qua lỗi, không làm hỏng UI */ }
+  }
+
+  function computeBaseTDEE(){
+    var w=+document.getElementById('weight').value||70;
+    var h=+document.getElementById('height').value||170;
+    var a=+document.getElementById('age').value||30;
+    var g=document.getElementById('gender').value;
+    var act=+document.getElementById('activity').value||1.55;
+    var bf=+document.getElementById('bf').value||0;
+    var bmr;
+    if(bf>0){ var lbm=w*(1-bf/100); bmr=370+21.6*lbm; }
+    else{ bmr = (g==='male') ? 10*w + 6.25*h - 5*a + 5 : 10*w + 6.25*h - 5*a - 161; }
+    return bmr*act;
+  }
+
+  function applyPct(p){
+    var base = computeBaseTDEE();
+    var val = Math.round(base * p / 100);
+    var input = document.getElementById('calorie-adjust');
+    if(input){ input.value = val; }
+    if (typeof updateMacroView === 'function') updateMacroView();
+  }
+
+  // Global click handler for the segmented buttons
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('#calorie-pcts-head button');
+    if(!btn) return;
+    var seg = document.getElementById('calorie-pcts-head');
+    if(seg){ seg.querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed','false'); }); }
+    btn.setAttribute('aria-pressed','true');
+    var pct = parseInt(btn.dataset.pct,10);
+    applyPct(pct);
+  }, true);
+
+  // Build once DOM ready and also when goal/activity etc. change (in case DOM re-renders)
+  document.addEventListener('DOMContentLoaded', ensureCalorieSeg);
+  ['goal','activity','gender','age','weight','height','bf'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){
+      el.addEventListener('change', ensureCalorieSeg);
+      el.addEventListener('input', ensureCalorieSeg);
+    }
+  });
+
+  // Immediate run in case this script loads late
+  ensureCalorieSeg();
+})();
+</script>
+
+
+<div id="edit-modal-backdrop" class="modal-backdrop hidden">
+  <div class="modal-box">
+    <h3>Chỉnh sửa <span id="edit-kind">Thực phẩm</span></h3>
+    <p class="help">Loại: <span id="edit-type"></span></p>
+    <div class="row">
+      <div class="col">
+        <label>Tên</label>
+        <input id="edit-name" />
+      </div>
+      <div class="col">
+        <label>Calo / đơn vị</label>
+        <input id="edit-cal" type="number" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Protein (g)</label><input id="edit-protein" type="number" step="0.1" /></div>
+      <div class="col"><label>Carb (g)</label><input id="edit-carbs" type="number" step="0.1" /></div>
+      <div class="col"><label>Fat (g)</label><input id="edit-fat" type="number" step="0.1" /></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Định lượng</label><input id="edit-amount" type="number" /></div>
+      <div class="col">
+        <label>Đơn vị</label>
+        <select id="edit-unit">
+          <option value="g">g</option>
+          <option value="ml">ml</option>
+          <option value="iu">iu</option>
+        </select>
+      </div>
+    </div>
+    <div class="split-actions" style="margin-top:10px">
+      <button class="btn btn-pri" onclick="saveEditModal()">Lưu</button>
+      <button class="btn btn-ghost" onclick="closeEditModal()">Hủy</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+let editModalContext = null;
+function openEditModal(kind, type, idx){
+  editModalContext = {kind, type, idx};
+  const data = (kind === 'food' ? (foods[type] && foods[type][idx]) : (supplements[type] && supplements[type][idx]));
+  if(!data) return;
+  const kindLabel = (kind === 'food') ? 'Thực phẩm' : 'Supplement';
+  document.getElementById('edit-kind').textContent = kindLabel;
+  document.getElementById('edit-type').textContent = type;
+  document.getElementById('edit-name').value = data.name || '';
+  document.getElementById('edit-cal').value = data.cal || 0;
+  document.getElementById('edit-protein').value = data.protein || 0;
+  document.getElementById('edit-carbs').value = data.carbs || 0;
+  document.getElementById('edit-fat').value = data.fat || 0;
+  document.getElementById('edit-amount').value = data.amount || 0;
+  const unit = (data.unit === 'g' || data.unit === 'ml' || data.unit === 'iu') ? data.unit : 'g';
+  document.getElementById('edit-unit').value = unit;
+  document.getElementById('edit-modal-backdrop').classList.remove('hidden');
+}
+function closeEditModal(){
+  const box = document.getElementById('edit-modal-backdrop');
+  if(box) box.classList.add('hidden');
+  editModalContext = null;
+}
+function saveEditModal(){
+  if(!editModalContext) return;
+  const name = document.getElementById('edit-name').value.trim();
+  const cal = +document.getElementById('edit-cal').value;
+  const p = +document.getElementById('edit-protein').value;
+  const c = +document.getElementById('edit-carbs').value;
+  const f = +document.getElementById('edit-fat').value;
+  const amount = +document.getElementById('edit-amount').value;
+  const unit = document.getElementById('edit-unit').value;
+  if(!name || !Number.isFinite(cal) || !Number.isFinite(p) || !Number.isFinite(c) || !Number.isFinite(f) || !Number.isFinite(amount)){
+    alert("Thiếu hoặc sai thông tin. Vui lòng kiểm tra lại.");
+    return;
+  }
+  const obj = {name, cal, protein:p, carbs:c, fat:f, amount, unit};
+  const ctx = editModalContext;
+  if(ctx.kind === 'food'){
+    if(foods[ctx.type]) foods[ctx.type][ctx.idx] = obj;
+    saveFoodsSmart();
+  } else {
+    if(supplements[ctx.type]) supplements[ctx.type][ctx.idx] = obj;
+    saveSuppsSmart();
+  }
+  renderFoodTables();
+  closeEditModal();
+}
+function editFood(type, idx){
+  openEditModal('food', type, idx);
+}
+function editSupp(type, idx){
+  openEditModal('supp', type, idx);
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    const box = document.getElementById('edit-modal-backdrop');
+    if(box && !box.classList.contains('hidden')){
+      closeEditModal();
+    }
+  }
+});
+</script>
+
+
+<script>
+/* ===== PROFESSIONAL PHASE ROUTER ===== */
+(() => {
+  let activePhase = 1;
+  const phaseButtons = () => [...document.querySelectorAll("[data-phase]")];
+  const phasePanels = () => [...document.querySelectorAll("[data-phase-panel]")];
+
+  function isLoggedIn(){
+    return !!window.currentPhone || !!document.body.dataset.sessionReady ||
+      !document.getElementById("step1")?.classList.contains("hidden");
+  }
+
+  function validatePhaseOne(){
+    if(typeof window.step1Valid === "function") return window.step1Valid();
+    const required = ["customer-name","age","weight","height"];
+    return required.every(id => {
+      const el = document.getElementById(id);
+      return el && String(el.value || "").trim();
+    });
+  }
+
+  function setPhase(phase, options = {}){
+    const next = Math.max(1, Math.min(3, Number(phase) || 1));
+
+    if(next > 1 && !validatePhaseOne()){
+      alert("Vui lòng hoàn thành thông tin cá nhân trước khi tiếp tục.");
+      return;
+    }
+
+    activePhase = next;
+    phasePanels().forEach(panel => {
+      const match = Number(panel.dataset.phasePanel) === next;
+      panel.classList.toggle("hidden", !match);
+      if(match) panel.classList.add("phase-panel");
+    });
+
+    phaseButtons().forEach(btn => {
+      const value = Number(btn.dataset.phase);
+      if(value === next) btn.setAttribute("aria-current","step");
+      else btn.removeAttribute("aria-current");
+      btn.classList.toggle("is-complete", value < next);
+    });
+
+    history.replaceState(null, "", `#generator/phase-${next}`);
+    if(options.scroll !== false){
+      document.getElementById("phase-shell")?.scrollIntoView({behavior:"smooth", block:"start"});
+    }
+  }
+
+  window.setGeneratorPhase = setPhase;
+
+  document.addEventListener("click", (event) => {
+    const phaseButton = event.target.closest("[data-phase]");
+    if(phaseButton){
+      setPhase(phaseButton.dataset.phase);
+      return;
+    }
+    const goButton = event.target.closest("[data-go-phase]");
+    if(goButton){
+      setPhase(goButton.dataset.goPhase);
+    }
+  });
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.tab;
+      history.replaceState(null, "", `#${id}`);
+      if(id === "generator"){
+        requestAnimationFrame(() => setPhase(activePhase, {scroll:false}));
+      }
+    });
+  });
+
+  const loginButton = document.getElementById("btn-phone-login");
+  loginButton?.addEventListener("click", () => {
+    setTimeout(() => {
+      if(!document.getElementById("step1")?.classList.contains("hidden")){
+        document.body.dataset.sessionReady = "true";
+        setPhase(1, {scroll:false});
+      }
+    }, 500);
+  });
+
+  document.getElementById("btn-show-manual")?.addEventListener("click", () => {
+    setTimeout(() => setPhase(3, {scroll:false}), 0);
+  });
+
+  document.getElementById("btn-toggle-steps")?.addEventListener("click", () => {
+    setTimeout(() => setPhase(1), 0);
+  });
+
+  window.addEventListener("popstate", () => {
+    const match = location.hash.match(/phase-(\d)/);
+    if(match) setPhase(Number(match[1]), {scroll:false});
+  });
+
+  // Initial professional state: login remains visible; workflow starts at phase 1.
+  requestAnimationFrame(() => {
+    const match = location.hash.match(/phase-(\d)/);
+    setPhase(match ? Number(match[1]) : 1, {scroll:false});
+  });
+})();
+</script>
+
+
+<script>
+/* ===== V2 ACCOUNT PORTAL ===== */
+(() => {
+  const step0 = document.getElementById("step0");
+  const sidebarHost = document.getElementById("sidebar-account-slot");
+  const mobileHost = document.getElementById("mobile-login-host");
+  if(!step0 || !sidebarHost || !mobileHost) return;
+
+  const summary = document.createElement("div");
+  summary.className = "account-summary";
+  summary.innerHTML = `
+    <div class="account-avatar" aria-hidden="true">U</div>
+    <div class="account-copy">
+      <span class="account-name">Chưa đăng nhập</span>
+      <span class="account-phone">Đăng nhập để đồng bộ dữ liệu</span>
+      <span class="account-status" hidden>Đã đăng nhập</span>
+    </div>
+  `;
+  step0.insertBefore(summary, step0.firstChild);
+
+  const avatar = summary.querySelector(".account-avatar");
+  const nameEl = summary.querySelector(".account-name");
+  const phoneEl = summary.querySelector(".account-phone");
+  const statusEl = summary.querySelector(".account-status");
+  const phoneInput = document.getElementById("phone-number");
+  const logoutWrap = document.getElementById("phone-logout-wrap");
+  const customerName = document.getElementById("customer-name");
+
+  function loggedIn(){
+    return logoutWrap && getComputedStyle(logoutWrap).display !== "none";
+  }
+
+  function initials(value){
+    const text = String(value || "").trim();
+    if(!text) return "U";
+    const parts = text.split(/\s+/).filter(Boolean);
+    return (parts.length > 1 ? parts[0][0] + parts.at(-1)[0] : parts[0].slice(0,2)).toUpperCase();
+  }
+
+  function refreshAccount(){
+    const active = loggedIn();
+    const name = (customerName?.value || "").trim();
+    const phone = (phoneInput?.value || "").trim();
+
+    if(active){
+      nameEl.textContent = name || "Tài khoản của bạn";
+      phoneEl.textContent = phone || "Đã xác thực số điện thoại";
+      avatar.textContent = initials(name || phone);
+      statusEl.hidden = false;
+      summary.hidden = false;
+    }else{
+      nameEl.textContent = "Chưa đăng nhập";
+      phoneEl.textContent = "Nhập số điện thoại để bắt đầu";
+      avatar.textContent = "U";
+      statusEl.hidden = true;
+      summary.hidden = window.innerWidth <= 900;
+    }
+  }
+
+  function placeAccount(){
+    const managerMode = window.AppLayoutManager?.getMode?.();
+    const desktop = managerMode ? managerMode === "pc" : window.innerWidth > 900;
+    const target = desktop ? sidebarHost : mobileHost;
+    if(step0.parentElement !== target) target.appendChild(step0);
+    refreshAccount();
+  }
+
+  const observer = new MutationObserver(refreshAccount);
+  if(logoutWrap) observer.observe(logoutWrap, {attributes:true, attributeFilter:["style","class"]});
+
+  phoneInput?.addEventListener("input", refreshAccount);
+  customerName?.addEventListener("input", refreshAccount);
+  document.getElementById("btn-phone-login")?.addEventListener("click", () => setTimeout(refreshAccount, 650));
+  document.getElementById("btn-phone-logout")?.addEventListener("click", () => setTimeout(refreshAccount, 100));
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(placeAccount, 100);
+  });
+
+  placeAccount();
+})();
+</script>
+
+
+<script>
+/* ===== V3 SINGLE-SOURCE LAYOUT MANAGER ===== */
+(() => {
+  const body = document.body;
+  const pcBtn = document.getElementById("view-pc");
+  const mobileBtn = document.getElementById("view-mobile");
+  const content = document.querySelector(".content");
+  const previewViewport = document.getElementById("preview-viewport");
+  const previewBottomNav = document.getElementById("preview-bottom-nav");
+  const sidebarNav = document.querySelector(".tabs");
+  const sidebarHost = document.getElementById("sidebar-account-slot");
+  const mobileHost = document.getElementById("mobile-login-host");
+  const step0 = document.getElementById("step0");
+
+  const panels = [...document.querySelectorAll(".tab-panel")];
+  const sourceButtons = [...document.querySelectorAll(".tabs .tab-btn")];
+
+  let mode = window.innerWidth <= 900 ? "real-mobile" : "pc";
+  let previewPanelId = "generator";
+
+  function clonePreviewNav(){
+    if(!previewBottomNav) return;
+    previewBottomNav.innerHTML = "";
+    sourceButtons.forEach(btn => {
+      const clone = btn.cloneNode(true);
+      clone.removeAttribute("id");
+      clone.classList.remove("hidden");
+      clone.addEventListener("click", () => {
+        previewPanelId = clone.dataset.tab;
+        renderPreviewPanel();
+      });
+      previewBottomNav.appendChild(clone);
+    });
+  }
+
+  function restorePanels(){
+    panels.forEach(panel => {
+      if(panel.parentElement !== content){
+        content.appendChild(panel);
+      }
+    });
+  }
+
+  function renderPreviewPanel(){
+    if(mode !== "mobile-preview" || !previewViewport) return;
+
+    const target = panels.find(p => p.id === previewPanelId) || panels[0];
+    panels.forEach(panel => {
+      panel.classList.toggle("hidden", panel !== target);
+    });
+
+    if(target.parentElement !== previewViewport){
+      previewViewport.appendChild(target);
+    }
+
+    [...previewBottomNav.querySelectorAll(".tab-btn")].forEach(btn => {
+      btn.setAttribute("aria-selected", btn.dataset.tab === target.id ? "true" : "false");
+      if(btn.dataset.tab === "admin" && document.querySelector('.tabs .tab-btn[data-tab="admin"]')?.classList.contains("hidden")){
+        btn.classList.add("hidden");
+      }
+    });
+
+    if(target.id === "saved" && typeof renderSaved === "function") renderSaved();
+    if(target.id === "food" && typeof renderFoodTables === "function") renderFoodTables();
+    if(target.id === "tracking"){
+      if(typeof renderTrackingList === "function") renderTrackingList(false);
+      if(typeof renderChart === "function") setTimeout(renderChart, 0);
+    }
+    if(target.id === "admin" && typeof loadAdminUsers === "function") loadAdminUsers();
+
+    previewViewport.scrollTop = 0;
+  }
+
+  function placeAccountForMode(){
+    if(!step0) return;
+    const target = (mode === "pc") ? sidebarHost : mobileHost;
+    if(target && step0.parentElement !== target){
+      target.appendChild(step0);
+    }
+  }
+
+  function applyMode(nextMode){
+    mode = nextMode;
+
+    body.classList.remove("view-pc","view-mobile","layout-mobile-preview");
+    restorePanels();
+
+    if(mode === "mobile-preview"){
+      body.classList.add("layout-mobile-preview");
+      mobileBtn?.setAttribute("aria-pressed","true");
+      pcBtn?.setAttribute("aria-pressed","false");
+      placeAccountForMode();
+      renderPreviewPanel();
+    }else if(mode === "real-mobile"){
+      body.classList.add("view-mobile");
+      mobileBtn?.setAttribute("aria-pressed","true");
+      pcBtn?.setAttribute("aria-pressed","false");
+      placeAccountForMode();
+    }else{
+      body.classList.add("view-pc");
+      pcBtn?.setAttribute("aria-pressed","true");
+      mobileBtn?.setAttribute("aria-pressed","false");
+      placeAccountForMode();
+    }
+  }
+
+  pcBtn?.addEventListener("click", event => {
+    event.preventDefault();
+    applyMode(window.innerWidth <= 900 ? "real-mobile" : "pc");
+  });
+
+  mobileBtn?.addEventListener("click", event => {
+    event.preventDefault();
+    applyMode(window.innerWidth <= 900 ? "real-mobile" : "mobile-preview");
+  });
+
+  // Sync preview when the original application changes tabs.
+  sourceButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      previewPanelId = btn.dataset.tab;
+      if(mode === "mobile-preview") renderPreviewPanel();
+    });
+  });
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if(window.innerWidth <= 900){
+        applyMode("real-mobile");
+      }else if(mode === "real-mobile"){
+        applyMode("pc");
+      }
+    }, 120);
+  });
+
+  clonePreviewNav();
+  applyMode(mode);
+
+  // Expose the authoritative current mode to other scripts.
+  window.AppLayoutManager = {
+    getMode: () => mode,
+    isMobileUI: () => mode === "real-mobile" || mode === "mobile-preview",
+    setMode: applyMode,
+    refreshPreview: renderPreviewPanel
+  };
+})();
+</script>
+
+</body>
+</html>
